@@ -1,6 +1,6 @@
 {
   "module": {
-    "name": "Global",
+    "name": "global",
     "type": "har",
     "deviceTypes": [
       "default",

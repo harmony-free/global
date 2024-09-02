@@ -1,11 +1,13 @@
 {
   "name": "@free/global",
   "version": "1.0.0",
-  "description": "这是一个全局相关参数",
+  "description": "这是一个全局相关参数,收集了系统相关信息,屏幕相关信息,打包版本信息系统参数,以及打印日志收集和错误日志手机",
   "keywords": [
     "global",
     "device",
-    "layout"
+    "layout",
+    "log",
+    "router"
   ],
   "main": "Index.ets",
   "author": {
