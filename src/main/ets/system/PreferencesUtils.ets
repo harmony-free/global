@@ -1,7 +1,6 @@
 import { preferences } from '@kit.ArkData';
 import { webview } from '@kit.ArkWeb';
 import { uri } from '@kit.ArkTS';
-import { global } from './Global';
 
 export class PreferencesError extends Error {
   name: string = "PreferencesError"
@@ -38,6 +37,10 @@ export class PreferencesUtils {
 
   getAll(): Object {
     return this.preferencesUtils.getAllSync();
+  }
+
+  getMap<T = object>(): Map<string, T> {
+    return new Map<string, T>(Object.entries(this.getAll()))
   }
 
   put(key: string, value: preferences.ValueType) {

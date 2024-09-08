@@ -23,19 +23,12 @@ export struct LogPage {
     router.back()
   }
 
-  @Builder
-  rightView() {
-    Text('其他').onClick(() => {
-      new PreferencesLog().getAll()
-    })
-  }
-
   build() {
     Column() {
       NavBar({
         backAction: this.backAction,
-        title: "打印日志:" + global.log.logList.length,
-        rightBuilderParam: this.rightView
+        title: "控制台:" + global.log.logList.length,
+        // rightBuilderParam: this.rightView
       })
       List({ space: 1, initialIndex: 0 }) {
         ForEach(global.log.logList, (item: LogModelFace<string>) => {

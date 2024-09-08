@@ -1,7 +1,6 @@
 import { bundleManager, errorManager } from '@kit.AbilityKit'
 import { display, promptAction, window } from '@kit.ArkUI'
 import { LogUtils } from './Log'
-import map from '@hms.core.map.map'
 
 /**
  * 使用前需要在 windowStage.loadContent 中设置使用 globalInfo.setWindow(w) 设置mainWindow
@@ -81,18 +80,11 @@ class Window extends Display {
 
   /**
    * 设置打印日志
-   * @param num:number = 20 设置答应日志摇晃的幅度
+   * @param num:number = 100 设置日志展示的数量
    */
-  setLog(num: number = 20) {
-    this.log.sen.sensorNum(num)
-  }
-
-  /**
-   * 保存打印日志
-   * @param num:number = 20 设置答应日志摇晃的幅度
-   */
-  saveLog() {
-    this.log.save()
+  openLog(num: number = 100) {
+    this.log.max = 100
+    this.log.sen.sensorNum()
   }
 
   /**
@@ -324,6 +316,10 @@ class Global extends Error {
       }
     })
     return r
+  }
+
+  toMap<T = object>(obj: object): Map<string, T> {
+    return new Map<string, T>(Object.entries(obj))
   }
 }
 

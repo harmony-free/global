@@ -4,12 +4,13 @@ import { BusinessError } from '@kit.BasicServicesKit'
 import { router } from './Router'
 import '../components/LogPage'
 import { global } from './Global'
-import { PreferencesLog } from './PreferencesUtils'
+import { promptAction } from '@kit.ArkUI'
 
 type Type<K = object, V = object> = string | object | Map<K, V> | Array<K>
 
 enum LogType {
-  LOG
+  LOG = 'log',
+  INFO = 'info'
 }
 
 export interface LogModelFace<T> {
@@ -36,15 +37,17 @@ interface LogFace {
 
 @ObservedV2
 export class LogUtils implements LogFace {
+  max: number = 100
   sen: SensorUtils = new SensorUtils()
+  @Trace logList: Array<LogModelFace<string>> = new Array<LogModelFace<string>>()
 
   constructor() {
     util.Aspect.addAfter(console, 'log', true, this.logAfter)
+    util.Aspect.addAfter(console, 'info', true, this.logAfter)
   }
 
-  @Trace logList: Array<LogModelFace<string>> = new Array<LogModelFace<string>>()
-  logAfter: (instance: console, ret: string, arg: string, ...args: object[]) => void =
-    (instance: console, ret: string, arg: string, ...args: object[]) => {
+  logAfter: (instance: console, method: string, arg: string, ...args: object[]) => void =
+    (instance: console, method: string, arg: string, ...args: object[]) => {
       let msg = arg
       if (args != undefined) {
         args.forEach((a) => {
@@ -54,6 +57,9 @@ export class LogUtils implements LogFace {
             msg += JSON.stringify(a)
           }
         })
+      }
+      if (this.logList.length > this.max) {
+        this.logList.pop()
       }
       this.logList.push(new LogModel(msg))
     }
@@ -66,11 +72,6 @@ export class LogUtils implements LogFace {
     } else {
       console.log(JSON.stringify(data))
     }
-  }
-
-  save() {
-    new PreferencesLog().putFlush(new Date().toString(), this.logList)
-    this.logList = []
   }
 }
 
