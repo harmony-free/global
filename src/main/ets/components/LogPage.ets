@@ -1,64 +1,54 @@
-import { sensor } from '@kit.SensorServiceKit'
-import { router } from '@kit.ArkUI'
-import { BusinessError } from '@kit.BasicServicesKit'
+import { global } from '../system/Global'
+import { LogModelFace } from '../system/Log'
+import { PreferencesLog } from '../system/PreferencesUtils'
+import { router } from '../system/Router'
 import { NavBar } from './NavBar'
+
+
+@Builder
+export function LogBuilder(o: object) {
+  NavDestination() {
+    LogPage()
+  }.hideTitleBar(true)
+}
+
+router.requestBuilder("log", wrapBuilder(LogBuilder))
 
 //请求日志
 @Entry
 @Component
-struct LogPage {
+export struct LogPage {
   // 返回方法
   backAction = () => {
-    LogUtils.isLog = false
-    LogUtils.init()
     router.back()
+  }
+
+  @Builder
+  rightView() {
+    Text('其他').onClick(() => {
+      new PreferencesLog().getAll()
+    })
   }
 
   build() {
     Column() {
-      NavBar({ backAction: this.backAction, title: "打印日志:" + LogUtils.logList.length })
+      NavBar({
+        backAction: this.backAction,
+        title: "打印日志:" + global.log.logList.length,
+        rightBuilderParam: this.rightView
+      })
       List({ space: 1, initialIndex: 0 }) {
-        ForEach(LogUtils.logList, (item: string) => {
+        ForEach(global.log.logList, (item: LogModelFace<string>) => {
           ListItem() {
-            Column() {
-              Text(item)
-                .maxLines(5)
-                .width('100%')
-                .fontSize(16)
-                .padding(10)
-                .backgroundColor("#EEEEEE")
-                .borderRadius(10)
-                .onClick(() => {
-                  AlertDialog.show({ message: item })
-                })
-            }
+            Row() {
+              Text(`${item.createTime.getHours()}:${item.createTime.getMinutes()}:${item.createTime.getSeconds()} `)
+              Text(item.data).maxLines(1).width('80%').textOverflow({ overflow: TextOverflow.Ellipsis })
+            }.onClick(() => {
+              AlertDialog.show({ message: item.data })
+            }).padding(5).width('100%')
           }
         })
-      }.height('90%')
+      }.height(global.contextHeight - 44)
     }.height('100%')
-  }
-}
-
-
-export class LogUtils {
-  static isLog = false
-  static logList: string[]
-
-  static init() {
-    try {
-      sensor.on(sensor.SensorId.ACCELEROMETER, (data: sensor.GyroscopeResponse) => {
-        if (data.x > 20 || data.y > 20 || data.z > 20) {
-          sensor.off(sensor.SensorId.ACCELEROMETER);
-          console.log(JSON.stringify(LogUtils.isLog))
-          if (!LogUtils.isLog) {
-            LogUtils.isLog = true
-            router.pushUrl({ url: "pages/home/LogPage" })
-          }
-        }
-      });
-    } catch (error) {
-      let e: BusinessError = error as BusinessError;
-      console.error(`Failed to invoke on. Code: ${e.code}, message: ${e.message}`);
-    }
   }
 }

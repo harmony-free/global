@@ -64,11 +64,11 @@ interface RouterInfoFace {
  * Router: 实体接口类
  */
 interface RouterFace {
-  push(url: string, params?: object, animation?: object): Promise<RouterRespFace>
+  push(url: string, params?: object, animation?: boolean): Promise<RouterRespFace>
 
-  replace(url: string, params?: object, animation?: object): Promise<RouterRespFace>
+  replace(url: string, params?: object, animation?: boolean): Promise<RouterRespFace>
 
-  pop(params: object, animation?: object): Promise<RouterRespFace>
+  pop(params: object, animation?: boolean): Promise<RouterRespFace>
 
   // remove(id: number | string): Promise<RouterRespFace>
   //
@@ -120,7 +120,7 @@ class Router implements RouterFace {
    * @returns
    */
   push(name: string | WrappedBuilder<[object]>, params?: object,
-    animation?: object | undefined): Promise<RouterRespFace> {
+    animation?: boolean | undefined): Promise<RouterRespFace> {
     return new Promise<RouterRespFace>((res, rej) => {
       let url = ""
       if (typeof name != 'string') {
@@ -133,7 +133,7 @@ class Router implements RouterFace {
         return;
       }
       this.callBack.push(new RouterCallBack(url, res))
-      this.navPathStack.pushPathByName(url, params)
+      this.navPathStack.pushPathByName(url, params, animation)
     })
   }
 
@@ -145,7 +145,7 @@ class Router implements RouterFace {
    * @returns
    */
   replace(name: string | WrappedBuilder<[object]>, params?: object,
-    animation?: object | undefined): Promise<RouterRespFace> {
+    animation?: boolean | undefined): Promise<RouterRespFace> {
     return new Promise<RouterRespFace>((res, rej) => {
       let url = ""
       if (typeof name != 'string') {
@@ -159,19 +159,19 @@ class Router implements RouterFace {
       }
       this.call()
       this.callBack.push(new RouterCallBack(url, res))
-      this.navPathStack.replacePathByName(url, params)
+      this.navPathStack.replacePathByName(url, params, animation)
     })
   }
 
-  back(params?: object, animation?: object | undefined): Promise<RouterRespFace> {
+  back(params?: object, animation?: boolean | undefined): Promise<RouterRespFace> {
     return new Promise<RouterRespFace>((res, rej) => {
       this.call(params)
-      this.navPathStack.pop()
+      this.navPathStack.pop(params, animation)
     })
   }
 
   backName(name: string, params?: object,
-    animation?: object | undefined): Promise<RouterRespFace> {
+    animation?: boolean | undefined): Promise<RouterRespFace> {
     return new Promise<RouterRespFace>((res, rej) => {
       if (!this.builderMap.has(name)) {
         if (this.is404) {
@@ -181,15 +181,15 @@ class Router implements RouterFace {
         }
       } else {
         this.callName(name, params)
-        this.navPathStack.popToName(name, animation)
+        this.navPathStack.popToName(name, params, animation)
       }
     })
   }
 
-  pop(params?: object, animation?: object | undefined): Promise<RouterRespFace> {
+  pop(params?: object, animation?: boolean | undefined): Promise<RouterRespFace> {
     return new Promise<RouterRespFace>((res, rej) => {
       this.call(params)
-      this.navPathStack.pop()
+      this.navPathStack.pop(params, animation)
     })
   }
 

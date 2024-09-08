@@ -7,3 +7,5 @@ export * from './src/main/ets/components/NavBar'
 export * from './src/main/ets/components/LogPage'
 
 export * from './src/main/ets/components/MainPage'
+
+export * from './src/main/ets/system/PreferencesUtils'

@@ -1,6 +1,7 @@
-import { bundleManager } from '@kit.AbilityKit'
-import { display, window } from '@kit.ArkUI'
-import { log } from './Log'
+import { bundleManager, errorManager } from '@kit.AbilityKit'
+import { display, promptAction, window } from '@kit.ArkUI'
+import { LogUtils } from './Log'
+import map from '@hms.core.map.map'
 
 /**
  * 使用前需要在 windowStage.loadContent 中设置使用 globalInfo.setWindow(w) 设置mainWindow
@@ -45,6 +46,10 @@ class Window extends Display {
    */
   properties!: window.WindowProperties
   /**
+   * Log 日志
+   */
+  log: LogUtils = new LogUtils()
+  /**
    * 屏幕顶部刘海屏的高度
    */
   top: number = 0
@@ -69,10 +74,25 @@ class Window extends Display {
     this.main = main
     this.properties = this.main.getWindowProperties()
     this.main.on('windowSizeChange', () => this.resize())
+    this.resize()
     this.setFullScreen()
     this.setOrientation()
-    this.resize()
-    // this.setLister()
+  }
+
+  /**
+   * 设置打印日志
+   * @param num:number = 20 设置答应日志摇晃的幅度
+   */
+  setLog(num: number = 20) {
+    this.log.sen.sensorNum(num)
+  }
+
+  /**
+   * 保存打印日志
+   * @param num:number = 20 设置答应日志摇晃的幅度
+   */
+  saveLog() {
+    this.log.save()
   }
 
   /**
@@ -89,7 +109,7 @@ class Window extends Display {
    */
   navDestinationUpdate(info: NavDestinationInfo) {
     if (info.state == 0) {
-      log("组件显示：" + info.name)
+      console.log("组件显示：" + info.name)
     }
   }
 
@@ -99,10 +119,13 @@ class Window extends Display {
    */
   routerPageUpdate(info: RouterPageInfo) {
     if (info.state == 0) {
-      log("页面即将显示：" + info.name)
+      console.log("页面即将显示：" + info.name)
     }
   }
 
+  /**
+   * 重新计算位置信息
+   */
   resize() {
     let top = this.main.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM).topRect.height
     let bottom = this.main.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR).bottomRect.height
@@ -161,32 +184,83 @@ class Window extends Display {
   }
 }
 
-class Error extends Window {
-  registerId: number = -1
+export class Error extends Window {
+  /**
+   * 错误监听id
+   */
+  errorId: number = -1
+  /**
+   * 耗时监听id
+   */
+  observerId: number = -1
+  /**
+   * 错误监听方法
+   */
+  callback: errorManager.ErrorObserver = {
+    onUnhandledException: (errMsg: string) => this.onUnhandledException(errMsg),
+    onException: (errObject: globalThis.Error) => this.onException(errObject)
+  }
+  /**
+   * 监听主线程消息处理耗时
+   */
+  observer: errorManager.LoopObserver = {
+    onLoopTimeOut(timeout: number) {
+      // console.log('Duration timeout: ' + timeout);
+    }
+  };
 
-  setWant() {
-    this.main
+  /**
+   * 开启监听主线程
+   */
+  onObserver() {
+    errorManager.on("loopObserver", 1, this.observer);
   }
 
-  // let callback: errorManager.ErrorObserver = {
-  //   onUnhandledException: (errMsg) => {
-  //     console.log('产生未捕获异常时的回调，onUnhandledException:', errMsg);
-  //     // promptCustom.showDialog({ message: errMsg, title: "系统代码异常" })
-  //   },
-  //   onException: (errorObj) => {
-  //     console.log('产生异常上报JS层时的回调，onException');
-  //     // promptCustom.showToast({ message: errorObj.message })
-  //     console.log('onException, name: ', errorObj.name);
-  //     console.log('onException, message: ', errorObj.message);
-  //     if (typeof (errorObj.stack) === 'string') {
-  //       console.log('onException, stack: ', errorObj.stack);
-  //     }
-  //   }
-  // }
+  /**
+   * 关闭监听主线程
+   */
+  offObserver() {
+    errorManager.off("loopObserver");
+  }
 
+  /**
+   * 开启错误监听
+   */
+  onError() {
+    this.observerId = errorManager.on('error', this.callback);
+  }
+
+  /**
+   * 关闭错误监听
+   */
+  offError() {
+    errorManager.off("error", this.errorId, (result) => {
+      console.log('[Demo] result' + result.code + ';' + result.message);
+    })
+  }
+
+  /**
+   * 捕获的异常信息
+   * @param errMsg 错误提示
+   */
+  onUnhandledException(errMsg: string) {
+    console.log('产生未捕获异常时的回调，onUnhandledException:', errMsg);
+  }
+
+  /**
+   * 捕获的JS异常信息
+   * @param errObject:globalThis.Error 错误信息
+   */
+  onException(errObject: globalThis.Error) {
+    console.log('产生异常上报JS层时的回调，onException', errObject);
+    promptAction.showToast({ message: errObject.message })
+    if (typeof (errObject.stack) === 'string') {
+      console.log('onException, stack: ', errObject.stack);
+    }
+  }
 }
 
-class Global extends Window {
+class Global extends Error {
   /**
    * 应用包信息
    */
@@ -240,6 +314,16 @@ class Global extends Window {
     this.release = this.appInfo.appProvisionType == 'release'
     this.debug = this.appInfo.appProvisionType == 'debug'
     this.uid = this.appInfo.uid
+  }
+
+  toRecord(map: Map<string, object>): Record<string, object> {
+    let r: Record<string, object> = {}
+    map.forEach((value, key) => {
+      if (key !== undefined && value !== undefined) {
+        r[key] = value;
+      }
+    })
+    return r
   }
 }
 
