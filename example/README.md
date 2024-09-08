@@ -20,7 +20,7 @@
 
 #### 安装教程
 
-`ohpm install @free/global`
+`ohpm install @free/loading`
 
 #### 使用说明
 
