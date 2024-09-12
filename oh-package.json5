@@ -1,21 +1,24 @@
 {
   "name": "@free/global",
-  "version": "1.0.0",
-  "description": "这是一个全局相关参数,收集了系统相关信息,屏幕相关信息,打包版本信息系统参数,以及打印日志收集和错误日志收集",
+  "version": "1.0.1",
+  "description": "这是一个全局功能,全局信息、请求权限、日志信息、异常捕获、Navigation路由封装、首选项才存储封装、屏幕适配等app相关信息。",
   "keywords": [
     "global",
     "info",
     "layout",
     "log",
     "navbar",
-    "router"
+    "router",
+    "Navigation",
+    "异常捕获",
+    "日志收集"
   ],
   "main": "Index.ets",
   "author": {
     "name": "余邦锦",
     "email": "15179861454@163.com"
   },
-  "homepage": "https://gitee.com/harmony-free/global",
+  "homepage": "https://gitee.com/harmony-free",
   "repository": "https://gitee.com/harmony-free/global",
   "license": "MIT",
   "modelVersion": "5.0.0",

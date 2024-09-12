@@ -1,6 +1,8 @@
-import { bundleManager, errorManager } from '@kit.AbilityKit'
+import { abilityAccessCtrl, bundleManager, errorManager, PermissionRequestResult, Permissions } from '@kit.AbilityKit'
 import { display, promptAction, window } from '@kit.ArkUI'
 import { LogUtils } from './Log'
+import { JSON } from '@kit.ArkTS'
+import { PreferencesLog, PreferencesPermission } from './PreferencesUtils'
 
 /**
  * 使用前需要在 windowStage.loadContent 中设置使用 globalInfo.setWindow(w) 设置mainWindow
@@ -34,8 +36,104 @@ class Display {
   }
 }
 
+class Tools extends Display {
+  /**
+   * 请求权限，如果权限被拒接，弹窗提示前往设置打开权限
+   * @param permissions 权限名称
+   * @returns Map<Permissions, boolean> 对应权限的开关
+   */
+  requestPermissions(...permissions: Array<Permissions>): Promise<Map<Permissions, boolean>> {
+    return new Promise<Map<Permissions, boolean>>((res, rej) => {
+      let map = new Map<Permissions, boolean>()
+      let ac = abilityAccessCtrl.createAtManager()
+      ac.requestPermissionsFromUser(getContext(this), permissions).then(async (v: PermissionRequestResult) => {
+        for (let index = 0; index < v.permissions.length; index++) {
+          let permission = v.permissions[index] as Permissions
+          let authResult = v.authResults[index]
+          let first = v.dialogShownResults == undefined
+          let i = permissions.indexOf(permission)
+          if (i != -1) {
+            console.log(authResult.toString())
+            if (authResult == 0) {
+              map.set(permission, true)
+            } else if (authResult == -1) {
+              map.set(permission, false)
+              if (!first) {
+                let req = await new PreferencesPermission().open(permissions.toString())
+                if (req) {
+                  ac.requestPermissionOnSetting(getContext(this), permissions)
+                    .then((status: abilityAccessCtrl.GrantStatus[]) => {
+                      status.forEach((s, i) => {
+                        map.set(permissions[i], s == 0)
+                      })
+                      res(map)
+                    })
+                    .catch((e: Error) => {
+                      rej(e)
+                    })
+                } else {
+                  res(map)
+                }
+                return
+              }
+            }
+          }
+        }
+        res(map)
+      })
+    })
+  }
 
-class Window extends Display {
+  /**
+   * map 转化为Record类型
+   * @param map
+   * @returns
+   */
+  toRecord(map: Map<string, object>): Record<string, object> {
+    let r: Record<string, object> = {}
+    map.forEach((value, key) => {
+      if (key !== undefined && value !== undefined) {
+        r[key] = value;
+      }
+    })
+    return r
+  }
+
+  /**
+   * object 转化为map类型
+   * @param obj
+   * @returns
+   */
+  toMap<T = object>(obj: object): Map<string, T> {
+    return new Map<string, T>(Object.entries(obj))
+  }
+
+  listParams<T>(list: object[], k: string): Array<T> {
+    let l: Array<T> = []
+    list.forEach((v) => {
+      l.push(v[k] as T)
+    })
+    return l
+  }
+
+  /**
+   * 计算当前组件的中心位置
+   * @param e
+   * @returns
+   */
+  toCenter(e: ClickEvent): Offset {
+    let x = parseFloat(e.target.area.globalPosition.x!.toString())
+    let y = parseFloat(e.target.area.globalPosition.y!.toString())
+    let w = parseFloat(e.target.area.width.toString())
+    let h = parseFloat(e.target.area.height.toString())
+    let cenX = x + w / 2
+    let cenY = y + h / 2
+    return { dx: cenX, dy: cenY }
+  }
+}
+
+
+class Window extends Tools {
   /**
    * 主window信息
    */
@@ -306,20 +404,6 @@ class Global extends Error {
     this.release = this.appInfo.appProvisionType == 'release'
     this.debug = this.appInfo.appProvisionType == 'debug'
     this.uid = this.appInfo.uid
-  }
-
-  toRecord(map: Map<string, object>): Record<string, object> {
-    let r: Record<string, object> = {}
-    map.forEach((value, key) => {
-      if (key !== undefined && value !== undefined) {
-        r[key] = value;
-      }
-    })
-    return r
-  }
-
-  toMap<T = object>(obj: object): Map<string, T> {
-    return new Map<string, T>(Object.entries(obj))
   }
 }
 

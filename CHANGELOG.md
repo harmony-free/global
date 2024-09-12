@@ -1,3 +1,9 @@
+### 1.0.1 新增功能
+
+1、新增请求权限功能
+
+2、修改了readme文档
+
 ### 1.0.0 初始发布
 
 1、刘海屏适配参数，top，bottom，contextWidth，contextHeight等屏幕参数。

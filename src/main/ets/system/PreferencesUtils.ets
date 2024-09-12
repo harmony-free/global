@@ -1,6 +1,7 @@
 import { preferences } from '@kit.ArkData';
 import { webview } from '@kit.ArkWeb';
 import { uri } from '@kit.ArkTS';
+import { promptAction } from '@kit.ArkUI';
 
 export class PreferencesError extends Error {
   name: string = "PreferencesError"
@@ -108,6 +109,39 @@ export class PreferencesUtils {
 export class PreferencesLog extends PreferencesUtils {
   constructor() {
     super({ name: 'log' })
+  }
+}
+
+export class PreferencesPermission extends PreferencesUtils {
+  constructor() {
+    super({ name: 'permission' })
+  }
+
+  open(permission: string): Promise<boolean> {
+    return new Promise<boolean>(async (res, rej) => {
+      let isReq = new PreferencesPermission().get(permission, true)
+      if (isReq == true) {
+        let req: promptAction.ShowDialogSuccessResponse = await promptAction.showDialog({
+          title: "权限被禁止",
+          message: permission + "权限已被禁止，请修改系统设置开启。",
+          buttons: [
+            { text: "不再提示", color: '#000000' },
+            { text: "修改", color: '#0000FF' }
+          ]
+        })
+        if (req.index == 1) {
+          res(true)
+        } else {
+          if (req.index == 0) {
+            this.put(permission, false)
+          }
+          res(false)
+        }
+      } else {
+        promptAction.showToast({ message: "请前往：设置 > 隐私和安全 > 权限类型 > 具体应用 打开相关权限" })
+        res(false)
+      }
+    })
   }
 }
 

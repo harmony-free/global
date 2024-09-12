@@ -2,7 +2,7 @@
 
 #### 介绍
 
-这是一个全局相关参数,收集了系统相关信息,屏幕相关信息,打包版本信息系统参数,以及打印日志收集和错误日志收集。
+这是一个全局功能,全局信息、请求权限、日志信息、异常捕获、Navigation路由封装、首选项才存储封装、屏幕适配等app相关信息。
 
 1、刘海屏适配参数，top，bottom，contextWidth，contextHeight等屏幕参数。
 
@@ -13,6 +13,30 @@
 4、router 基于 Navigation封装的 router 使用方式和原router一致
 
 5、Preferences 工具类，可直接引用或者继承。
+
+| 主要功能 | 模块          | 使用方式                                                           | 介绍                                                                                                 |
+|------|-------------|----------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| 全局信息 | global      | global.setWindow(windowStage.getMainWindowSync())              | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Global.ets)           |
+| 请求权限 | permissions | global.requestPermissions() // 非首次请求会弹窗提示，点击不再提示将不再提示          | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Global.ets)           |
+| 日志信息 | Log         | global.openLog() // 摇晃手机会打开日志                                  | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Log.ets)              |
+| 异常捕获 | Error       | global.onError() // 开启异常捕获 <br/> global.offError() // 关闭异常捕获   | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Global.ets)           |
+| 路由信息 | router      | router.push(name:string) // 跳转页面 <br/> router.back() // 返回上一页面 | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Router.ets)           |
+| 首选项  | Preferences | PreferencesUtils // 可以继承                                       | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/PreferencesUtils.ets) |
+
+| global信息  | api               | 介绍                                                                                                                          |
+|-----------|-------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| 屏幕信息      | global.dis        | [详细文档](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-display-V5#displaygetdisplaybyidsync12) |
+| 主window信息 | global.main       | [详细文档](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-window-V5)                              |
+| 应用信息      | global.appInfo    | [详细文档](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-bundlemanager-applicationinfo-V5)       |
+| 打包信息      | global.bundleInfo | [详细文档](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-bundlemanager-bundleinfo-V5)            |
+| 刘海屏高度     | global.top        | 计算得出                                                                                                                        |
+| 底部凹陷高度    | global.bottom     | 计算得出                                                                                                                        |
+| 内容宽度      | global.width      | 计算得出                                                                                                                        |
+| 内容高度      | global.height     | 计算得出                                                                                                                        |
+| 应用名称      | global.appName    | 计算得出                                                                                                                        |
+| 应用包名      | global.bundleName | 计算得出                                                                                                                        |
+| 版本号       | global.version    | 计算得出                                                                                                                        |
+| 打包环境      | global.env        | 计算得出                                                                                                                        |
 
 #### 软件架构
 
