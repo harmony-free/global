@@ -108,6 +108,12 @@ class Tools extends Display {
     return new Map<string, T>(Object.entries(obj))
   }
 
+  /**
+   * 根据参数取数组
+   * @param list
+   * @param k
+   * @returns
+   */
   listParams<T>(list: object[], k: string): Array<T> {
     let l: Array<T> = []
     list.forEach((v) => {
