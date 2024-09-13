@@ -85,6 +85,19 @@ class Tools extends Display {
   }
 
   /**
+   * 滑动动效
+   * @param edge 滑出方式
+   * @returns 返回动效
+   */
+  moveEffect(edge: TransitionEdge | undefined, duration: number = 200): TransitionEffect {
+    return TransitionEffect.asymmetric(
+      TransitionEffect.move(edge).animation({ duration: duration })
+      ,
+      TransitionEffect.move(edge).animation({ duration: duration })
+    )
+  }
+
+  /**
    * map 转化为Record类型
    * @param map
    * @returns
