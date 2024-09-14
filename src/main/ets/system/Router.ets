@@ -2,6 +2,7 @@
  * 使用的时候需要注册相关@Builder组件
  */
 import * as nav from '../components/NavBar'
+import { global } from './Global'
 
 /**
  * Router回调用的参数
@@ -102,17 +103,6 @@ class Router implements RouterFace {
   }
 
   /**
-   * 生成随机UUID
-   * @returns
-   */
-  generateUUID(): string {
-    return 'xxxxyxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
-
-  /**
    * 路由跳转
    * @param name:string | WrappedBuilder 需要跳转的页面名称或者页面组件
    * @param params 跳转传入的参数
@@ -124,7 +114,7 @@ class Router implements RouterFace {
     return new Promise<RouterRespFace>((res, rej) => {
       let url = ""
       if (typeof name != 'string') {
-        url = this.generateUUID()
+        url = global.generateUUID()
         this.requestBuilder(url, name)
       } else {
         url = name
@@ -149,7 +139,7 @@ class Router implements RouterFace {
     return new Promise<RouterRespFace>((res, rej) => {
       let url = ""
       if (typeof name != 'string') {
-        url = this.generateUUID()
+        url = global.generateUUID()
         this.requestBuilder(url, name)
       } else {
         url = name

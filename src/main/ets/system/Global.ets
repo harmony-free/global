@@ -1,19 +1,14 @@
-import { abilityAccessCtrl, bundleManager, errorManager, PermissionRequestResult, Permissions } from '@kit.AbilityKit'
+import {
+  abilityAccessCtrl,
+  bundleManager,
+  common,
+  errorManager,
+  PermissionRequestResult,
+  Permissions
+} from '@kit.AbilityKit'
 import { display, promptAction, window } from '@kit.ArkUI'
 import { LogUtils } from './Log'
-import { JSON } from '@kit.ArkTS'
-import { PreferencesLog, PreferencesPermission } from './PreferencesUtils'
-
-/**
- * 使用前需要在 windowStage.loadContent 中设置使用 globalInfo.setWindow(w) 设置mainWindow
- */
-
-const flags: bundleManager.BundleFlag =
-  bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION | bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_HAP_MODULE
-
-const bundleInfo = bundleManager.getBundleInfoForSelfSync(flags)
-
-export const appInfo = bundleInfo.appInfo
+import { PreferencesPermission } from './PreferencesUtils'
 
 class Display {
   /**
@@ -82,6 +77,30 @@ class Tools extends Display {
         res(map)
       })
     })
+  }
+
+  /**
+   * 生成随机UUID
+   * @returns
+   */
+  generateUUID(): string {
+    return 'xxxxyxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * 滑动动效
+   * @param edge 滑出方式
+   * @returns 返回动效
+   */
+  moveEffect(edge: TransitionEdge | undefined, duration: number = 200): TransitionEffect {
+    return TransitionEffect.asymmetric(
+      TransitionEffect.move(edge).animation({ duration: duration })
+      ,
+      TransitionEffect.move(edge).animation({ duration: duration })
+    )
   }
 
   /**
@@ -169,17 +188,38 @@ class Window extends Tools {
    */
   contextHeight: number = 0
 
+  constructor() {
+    super()
+    this.stage()
+  }
+
+  /**
+   * 获取stage
+   */
+  protected stage() {
+    let context = getContext() as common.UIAbilityContext
+    if (context == undefined) {
+      setTimeout(() => {
+        this.stage()
+      }, 300)
+    } else {
+      this.setWindow(context.windowStage.getMainWindowSync())
+    }
+  }
+
   /**
    * 设置系统zhu窗口
    * @param main:window.Window 系统主窗口
    */
   setWindow(main: window.Window) {
-    this.main = main
-    this.properties = this.main.getWindowProperties()
-    this.main.on('windowSizeChange', () => this.resize())
-    this.resize()
-    this.setFullScreen()
-    this.setOrientation()
+    if (this.main == undefined) {
+      this.main = main
+      this.properties = this.main.getWindowProperties()
+      this.main.on('windowSizeChange', () => this.resize())
+      this.resize()
+      this.setFullScreen()
+      this.setOrientation()
+    }
   }
 
   /**
@@ -398,11 +438,18 @@ class Global extends Error {
    */
   uid: number
 
-  constructor(bundleInfo: bundleManager.BundleInfo) {
+  constructor() {
     super()
-    this.bundleInfo = bundleInfo
-    this.appInfo = bundleInfo.appInfo
-    this.version = bundleInfo.versionName
+    /**
+     * 使用前需要在 windowStage.loadContent 中设置使用 globalInfo.setWindow(w) 设置mainWindow
+     */
+    const flags: bundleManager.BundleFlag =
+      bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION |
+      bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_HAP_MODULE
+
+    this.bundleInfo = bundleManager.getBundleInfoForSelfSync(flags)
+    this.appInfo = this.bundleInfo.appInfo
+    this.version = this.bundleInfo.versionName
     this.bundleName = this.appInfo.name
     this.appName = this.appInfo.label
     this.env = this.appInfo.appProvisionType
@@ -413,5 +460,5 @@ class Global extends Error {
   }
 }
 
-export const global = new Global(bundleInfo)
+export const global = new Global()
 
