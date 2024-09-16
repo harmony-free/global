@@ -8,6 +8,6 @@ git pull
 
 git push
 
-git tag $1
+git tag "$1"
 
 git push --tags

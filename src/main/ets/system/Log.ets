@@ -4,7 +4,6 @@ import { BusinessError } from '@kit.BasicServicesKit'
 import { router } from './Router'
 import '../components/LogPage'
 import { global } from './Global'
-import { promptAction } from '@kit.ArkUI'
 
 type Type<K = object, V = object> = string | object | Map<K, V> | Array<K>
 
