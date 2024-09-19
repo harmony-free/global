@@ -207,7 +207,7 @@ class Window extends Tools {
     if (context == undefined) {
       setTimeout(() => {
         this.stage()
-      }, 300)
+      }, 500)
     } else {
       this.setWindow(context.windowStage.getMainWindowSync())
     }
