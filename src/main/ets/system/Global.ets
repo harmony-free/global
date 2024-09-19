@@ -7,6 +7,7 @@ import {
   Permissions
 } from '@kit.AbilityKit'
 import { display, promptAction, window } from '@kit.ArkUI'
+import { AnimatorUtils } from './AnimatorUtils'
 import { LogUtils } from './Log'
 import { PreferencesPermission } from './PreferencesUtils'
 
@@ -32,6 +33,11 @@ class Display {
 }
 
 class Tools extends Display {
+  /**
+   * 动画
+   */
+  animation: AnimatorUtils = new AnimatorUtils()
+
   /**
    * 请求权限，如果权限被拒接，弹窗提示前往设置打开权限
    * @param permissions 权限名称
