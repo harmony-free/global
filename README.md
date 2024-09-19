@@ -14,14 +14,14 @@
 
 5、Preferences 工具类，可直接引用或者继承。
 
-| 主要功能 | 模块          | 使用方式                                                            | 介绍                                                                                                 |
-|------|-------------|-----------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
-| 全局信息 | global      | ~~global.setWindow(windowStage.getMainWindowSync())~~(不在需要手动获取) | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Global.ets)           |
-| 请求权限 | permissions | global.requestPermissions() // 非首次请求会弹窗提示，点击不再提示将不再提示           | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Global.ets)           |
-| 日志信息 | Log         | global.openLog() // 摇晃手机会打开日志                                   | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Log.ets)              |
-| 异常捕获 | Error       | global.onError() // 开启异常捕获 <br/> global.offError() // 关闭异常捕获    | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Global.ets)           |
-| 路由信息 | router      | router.push(name:string) // 跳转页面 <br/> router.back() // 返回上一页面  | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Router.ets)           |
-| 首选项  | Preferences | PreferencesUtils // 可以继承                                        | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/PreferencesUtils.ets) |
+| 主要功能 | 模块          | 使用方式                                                           | 介绍                                                                                                 |
+|------|-------------|----------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
+| 全局信息 | global      | global.setWindow(mainWindow)                                   | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Global.ets)           |
+| 请求权限 | permissions | // 权限请求会弹窗提示<br/>global.requestPermissions()                   | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Global.ets)           |
+| 日志信息 | Log         | // 摇晃手机会打开日志 <br/>global.openLog()                             | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Log.ets)              |
+| 异常捕获 | Error       | global.onError() // 开启异常捕获 <br/> global.offError() // 关闭异常捕获   | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Global.ets)           |
+| 路由信息 | router      | router.push(name:string) // 跳转页面 <br/> router.back() // 返回上一页面 | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/Router.ets)           |
+| 首选项  | Preferences | PreferencesUtils // 可以继承                                       | [详细代码](https://gitee.com/harmony-free/global/blob/master/src/main/ets/system/PreferencesUtils.ets) |
 
 | global信息  | api               | 介绍                                                                                                                          |
 |-----------|-------------------|-----------------------------------------------------------------------------------------------------------------------------|
