@@ -54,7 +54,6 @@ class Tools extends Display {
           let first = v.dialogShownResults == undefined
           let i = permissions.indexOf(permission)
           if (i != -1) {
-            console.log(authResult.toString())
             if (authResult == 0) {
               map.set(permission, true)
             } else if (authResult == -1) {

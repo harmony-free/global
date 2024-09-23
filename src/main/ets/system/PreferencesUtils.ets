@@ -2,6 +2,7 @@ import { preferences } from '@kit.ArkData';
 import { webview } from '@kit.ArkWeb';
 import { uri } from '@kit.ArkTS';
 import { promptAction } from '@kit.ArkUI';
+import { common, Want } from '@kit.AbilityKit';
 
 export class PreferencesError extends Error {
   name: string = "PreferencesError"
@@ -138,7 +139,29 @@ export class PreferencesPermission extends PreferencesUtils {
           res(false)
         }
       } else {
-        promptAction.showToast({ message: "请前往：设置 > 隐私和安全 > 权限类型 > 具体应用 打开相关权限" })
+        let req: promptAction.ShowDialogSuccessResponse = await promptAction.showDialog({
+          title: "权限被禁止",
+          message: "请前往：设置 > 隐私和安全 > 权限类型 > 具体应用 打开相关权限",
+          buttons: [
+            { text: "取消", color: '#000000' },
+            { text: "去设置", color: '#0000FF' }
+          ]
+        })
+        if (req.index == 1) {
+          this.put(permission, true)
+          let context = getContext(this) as common.UIAbilityContext;
+          let want: Want = {
+            bundleName: 'com.huawei.hmos.settings', //设置应用bundleName
+            abilityName: 'com.huawei.hmos.settings.MainAbility', //设置应用abilityName
+            uri: "application_info_entry", //应用管理页面
+            parameters: {
+              pushParams: {
+                bundleName: context.abilityInfo.bundleName//拉起方应用包名
+              }
+            }
+          }
+          context.startAbility(want)
+        }
         res(false)
       }
     })

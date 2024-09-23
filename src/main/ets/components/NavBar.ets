@@ -40,20 +40,18 @@ export struct NavBar {
   }
 
   build() {
-    Column() {
-      Stack() {
-        Text(this.title)
-          .width('70%')
-          .textAlign(this.textAlign)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .maxLines(1)
-          .fontColor(this.textColor)
-        Row() {
-          this.leftBuilderParam()
-          Blank()
-          this.rightBuilderParam()
-        }.padding(10).height(44).width('100%')
-      }.height(44 + global.top).width('100%').padding({ top: global.top }).backgroundColor(this.backColor)
-    }.width('100%')
+    Stack() {
+      Text(this.title)
+        .width('70%')
+        .textAlign(this.textAlign)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .maxLines(1)
+        .fontColor(this.textColor)
+      Row() {
+        this.leftBuilderParam()
+        Blank()
+        this.rightBuilderParam()
+      }.padding(10).height(44).width('100%')
+    }.height(44 + global.top).width('100%').padding({ top: global.top }).backgroundColor(this.backColor)
   }
 }
