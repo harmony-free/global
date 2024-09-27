@@ -3,6 +3,7 @@ import { webview } from '@kit.ArkWeb';
 import { uri } from '@kit.ArkTS';
 import { promptAction } from '@kit.ArkUI';
 import { common, Want } from '@kit.AbilityKit';
+import { global } from './Global';
 
 export class PreferencesError extends Error {
   name: string = "PreferencesError"
@@ -149,18 +150,7 @@ export class PreferencesPermission extends PreferencesUtils {
         })
         if (req.index == 1) {
           this.put(permission, true)
-          let context = getContext(this) as common.UIAbilityContext;
-          let want: Want = {
-            bundleName: 'com.huawei.hmos.settings', //设置应用bundleName
-            abilityName: 'com.huawei.hmos.settings.MainAbility', //设置应用abilityName
-            uri: "application_info_entry", //应用管理页面
-            parameters: {
-              pushParams: {
-                bundleName: context.abilityInfo.bundleName//拉起方应用包名
-              }
-            }
-          }
-          context.startAbility(want)
+          global.toAppInfo()
         }
         res(false)
       }

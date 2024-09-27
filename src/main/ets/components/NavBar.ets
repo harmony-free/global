@@ -15,7 +15,6 @@ export struct NavBar {
   // 默认左侧按钮
   @Builder
   leftBuilder() {
-    // parseInt(router.getLength()) > 1
     if (router.size() >= 1) {
       Text() {
         SymbolSpan($r('sys.symbol.chevron_left'))

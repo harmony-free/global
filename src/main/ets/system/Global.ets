@@ -4,12 +4,33 @@ import {
   common,
   errorManager,
   PermissionRequestResult,
-  Permissions
+  Permissions,
+  Want
 } from '@kit.AbilityKit'
-import { display, promptAction, window } from '@kit.ArkUI'
+import { componentSnapshot, display, promptAction, window } from '@kit.ArkUI'
 import { AnimatorUtils } from './AnimatorUtils'
 import { LogUtils } from './Log'
 import { PreferencesPermission } from './PreferencesUtils'
+import { systemShare } from '@kit.ShareKit'
+import { uniformTypeDescriptor as utd } from '@kit.ArkData';
+import { filePreview } from '@kit.PreviewKit'
+import { BusinessError } from '@kit.BasicServicesKit'
+import { interactiveLiveness } from '@kit.VisionKit'
+import { hilog } from '@kit.PerformanceAnalysisKit'
+import { image } from '@kit.ImageKit'
+import { photoAccessHelper } from '@kit.MediaLibraryKit'
+import { fileIo } from '@kit.CoreFileKit'
+
+
+interface ContextDir {
+  cacheDir: string
+  cloudFileDir: string
+  tempDir: string
+  filesDir: string
+  preferencesDir: string
+  bundleCodeDir: string
+  resourceDir: string
+}
 
 class Display {
   /**
@@ -24,146 +45,30 @@ class Display {
    * 屏幕的高度
    */
   height: number
+  /**
+   * 像素密度
+   */
+  density: number
+  /**
+   * 帧率
+   */
+  hz: number
+  /**
+   * 设备id
+   */
+  id: number
 
   constructor() {
     this.dis = display.getDefaultDisplaySync()
+    this.id = this.dis.id
+    this.density = this.dis.densityPixels
+    this.hz = this.dis.refreshRate
     this.width = px2vp(this.dis.width)
     this.height = px2vp(this.dis.height)
   }
 }
 
-class Tools extends Display {
-  /**
-   * 动画
-   */
-  animation: AnimatorUtils = new AnimatorUtils()
-
-  /**
-   * 请求权限，如果权限被拒接，弹窗提示前往设置打开权限
-   * @param permissions 权限名称
-   * @returns Map<Permissions, boolean> 对应权限的开关
-   */
-  requestPermissions(...permissions: Array<Permissions>): Promise<Map<Permissions, boolean>> {
-    return new Promise<Map<Permissions, boolean>>((res, rej) => {
-      let map = new Map<Permissions, boolean>()
-      let ac = abilityAccessCtrl.createAtManager()
-      ac.requestPermissionsFromUser(getContext(this), permissions).then(async (v: PermissionRequestResult) => {
-        for (let index = 0; index < v.permissions.length; index++) {
-          let permission = v.permissions[index] as Permissions
-          let authResult = v.authResults[index]
-          let first = v.dialogShownResults == undefined
-          let i = permissions.indexOf(permission)
-          if (i != -1) {
-            if (authResult == 0) {
-              map.set(permission, true)
-            } else if (authResult == -1) {
-              map.set(permission, false)
-              if (!first) {
-                let req = await new PreferencesPermission().open(permissions.toString())
-                if (req) {
-                  ac.requestPermissionOnSetting(getContext(this), permissions)
-                    .then((status: abilityAccessCtrl.GrantStatus[]) => {
-                      status.forEach((s, i) => {
-                        map.set(permissions[i], s == 0)
-                      })
-                      res(map)
-                    })
-                    .catch((e: Error) => {
-                      rej(e)
-                    })
-                } else {
-                  res(map)
-                }
-                return
-              }
-            }
-          }
-        }
-        res(map)
-      })
-    })
-  }
-
-  /**
-   * 生成随机UUID
-   * @returns
-   */
-  generateUUID(): string {
-    return 'xxxxyxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
-
-  /**
-   * 滑动动效
-   * @param edge 滑出方式
-   * @returns 返回动效
-   */
-  moveEffect(edge: TransitionEdge | undefined, duration: number = 200): TransitionEffect {
-    return TransitionEffect.asymmetric(
-      TransitionEffect.move(edge).animation({ duration: duration })
-      ,
-      TransitionEffect.move(edge).animation({ duration: duration })
-    )
-  }
-
-  /**
-   * map 转化为Record类型
-   * @param map
-   * @returns
-   */
-  toRecord(map: Map<string, object>): Record<string, object> {
-    let r: Record<string, object> = {}
-    map.forEach((value, key) => {
-      if (key !== undefined && value !== undefined) {
-        r[key] = value;
-      }
-    })
-    return r
-  }
-
-  /**
-   * object 转化为map类型
-   * @param obj
-   * @returns
-   */
-  toMap<T = object>(obj: object): Map<string, T> {
-    return new Map<string, T>(Object.entries(obj))
-  }
-
-  /**
-   * 根据参数取数组
-   * @param list
-   * @param k
-   * @returns
-   */
-  listParams<T>(list: object[], k: string): Array<T> {
-    let l: Array<T> = []
-    list.forEach((v) => {
-      l.push(v[k] as T)
-    })
-    return l
-  }
-
-  /**
-   * 计算当前组件的中心位置
-   * @param e
-   * @returns
-   */
-  toCenter(e: ClickEvent): Offset {
-    let x = parseFloat(e.target.area.globalPosition.x!.toString())
-    let y = parseFloat(e.target.area.globalPosition.y!.toString())
-    let w = parseFloat(e.target.area.width.toString())
-    let h = parseFloat(e.target.area.height.toString())
-    let cenX = x + w / 2
-    let cenY = y + h / 2
-    return { dx: cenX, dy: cenY }
-  }
-}
-
-
-class Window extends Tools {
+class Window extends Display {
   /**
    * 主window信息
    */
@@ -199,10 +104,36 @@ class Window extends Tools {
   }
 
   /**
+   * 获取Context
+   * @returns
+   */
+  getContext(): common.UIAbilityContext | undefined {
+    return getContext() as common.UIAbilityContext
+  }
+
+  contextDir(): ContextDir | undefined {
+    let context = this.getContext()
+    if (context == undefined) {
+      return undefined
+    } else {
+      return {
+        cacheDir: context.cacheDir,
+        cloudFileDir: context.cloudFileDir,
+        tempDir: context.tempDir,
+        filesDir: context.filesDir,
+        preferencesDir: context.preferencesDir,
+        bundleCodeDir: context.bundleCodeDir,
+        resourceDir: context.resourceDir,
+      }
+    }
+
+  }
+
+  /**
    * 获取stage
    */
   protected stage() {
-    let context = getContext() as common.UIAbilityContext
+    let context = this.getContext()
     if (context == undefined) {
       setTimeout(() => {
         this.stage()
@@ -325,7 +256,305 @@ class Window extends Tools {
   }
 }
 
-export class Error extends Window {
+class Tools extends Window {
+  /**
+   * 动画
+   */
+  animation: AnimatorUtils = new AnimatorUtils()
+
+  /**
+   * 打开权限管理
+   */
+  toAppInfo() {
+    let context = getContext(this) as common.UIAbilityContext;
+    let want: Want = {
+      bundleName: 'com.huawei.hmos.settings', //设置应用bundleName
+      abilityName: 'com.huawei.hmos.settings.MainAbility', //设置应用abilityName
+      uri: "application_info_entry", //应用管理页面
+      parameters: {
+        pushParams: {
+          bundleName: context.abilityInfo.bundleName//拉起方应用包名
+        }
+      }
+    }
+    context.startAbility(want)
+  }
+
+  /**
+   * 请求权限，如果权限被拒接，弹窗提示前往设置打开权限
+   * @param permissions 权限名称
+   * @returns Map<Permissions, boolean> 对应权限的开关
+   */
+  requestPermissions(...permissions: Array<Permissions>): Promise<Map<Permissions, boolean>> {
+    return new Promise<Map<Permissions, boolean>>((res, rej) => {
+      let map = new Map<Permissions, boolean>()
+      let ac = abilityAccessCtrl.createAtManager()
+      ac.requestPermissionsFromUser(getContext(this), permissions).then(async (v: PermissionRequestResult) => {
+        for (let index = 0; index < v.permissions.length; index++) {
+          let permission = v.permissions[index] as Permissions
+          let authResult = v.authResults[index]
+          let first = v.dialogShownResults == undefined
+          let i = permissions.indexOf(permission)
+          if (i != -1) {
+            if (authResult == 0) {
+              map.set(permission, true)
+            } else if (authResult == -1) {
+              map.set(permission, false)
+              if (!first) {
+                let req = await new PreferencesPermission().open(permissions.toString())
+                if (req) {
+                  ac.requestPermissionOnSetting(getContext(this), permissions)
+                    .then((status: abilityAccessCtrl.GrantStatus[]) => {
+                      status.forEach((s, i) => {
+                        map.set(permissions[i], s == 0)
+                      })
+                      res(map)
+                    })
+                    .catch((e: Error) => {
+                      this.toAppInfo()
+                      rej(e)
+                    })
+                } else {
+                  res(map)
+                }
+                return
+              }
+            }
+          }
+        }
+        res(map)
+      })
+    })
+  }
+
+  /**
+   * 分享弹窗
+   * @param record: systemShare.SharedRecord 弹窗数据
+   * @returns
+   */
+  share(record: systemShare.SharedRecord): Promise<boolean> {
+    return new Promise<boolean>((res, rej) => {
+      let data: systemShare.SharedData = new systemShare.SharedData(record);
+      let controller: systemShare.ShareController = new systemShare.ShareController(data);
+      let context = this.getContext()
+      if (context != undefined) {
+        if (record.thumbnail != undefined && record.thumbnail.byteLength > 32 * 1024) {
+          console.log("thumbnail size is not 32Kb")
+          rej("thumbnail size is not 32Kb")
+        } else {
+          let callback = () => {
+            res(true)
+            controller.off('dismiss', callback);
+          };
+          controller.on('dismiss', callback);
+          controller.show(context, {
+            previewMode: systemShare.SharePreviewMode.DETAIL,
+            selectionMode: systemShare.SelectionMode.SINGLE
+          });
+        }
+      } else {
+        rej("context is not find")
+      }
+    })
+  }
+
+  /**
+   * 文件预览
+   * @param info: filePreview.PreviewInfo 预览信息
+   */
+  preview(info: filePreview.PreviewInfo) {
+    let context = this.getContext()
+    if (context != undefined) {
+      let displayInfo: filePreview.DisplayInfo = {
+        x: 100,
+        y: 100,
+        width: 800,
+        height: 800
+      };
+      filePreview.openPreview(context, info, displayInfo).then(() => {
+        console.info('Succeeded in opening preview');
+      }).catch((err: BusinessError) => {
+        console.error(`Failed to open preview, err.code = ${err.code}, err.message = ${err.message}`);
+      });
+    }
+  }
+
+  /**
+   * 截屏组件 和 系统截屏
+   * @param key: string 被截屏的组件
+   * @param options
+   * @returns
+   */
+  snapshot(key?: string,
+    options: componentSnapshot.SnapshotOptions = {
+      scale: this.density,
+      waitUntilRenderFinished: true
+    }): Promise<image.PixelMap> {
+    return new Promise<image.PixelMap>((res, rej) => {
+      if (key == undefined) {
+        this.main.snapshot((err, data) => {
+          if (data) {
+            res(data)
+          } else {
+            console.log(err.message)
+            rej(err)
+          }
+        })
+      } else {
+        componentSnapshot.get(key, (err, data) => {
+          if (data) {
+            res(data)
+          } else {
+            console.log(err.message)
+            rej(err)
+          }
+        }, options)
+      }
+
+    })
+  }
+
+  /**
+   * 保存图片到相册
+   * @param data: ArrayBuffer | image.PixelMap 图片数据
+   * @returns: boolean 是否保存成功
+   */
+  async savePhoto(data: ArrayBuffer | image.PixelMap): Promise<boolean> {
+    return new Promise<boolean>(async (res, rej) => {
+      let context = this.getContext()
+      if (context == undefined) {
+        rej(false)
+      } else {
+        try {
+          await global.requestPermissions("ohos.permission.WRITE_IMAGEVIDEO")
+          let helper = photoAccessHelper.getPhotoAccessHelper(context);
+          let uri = await helper.createAsset(photoAccessHelper.PhotoType.IMAGE, 'png');
+          let file = await fileIo.open(uri, fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.CREATE);
+          if (!(data instanceof ArrayBuffer)) {
+            let packer = image.createImagePacker()
+            data = await packer.packing(data, { format: "image/png", quality: 100 })
+          }
+          await fileIo.write(file.fd, data);
+          await fileIo.close(file.fd);
+          promptAction.showToast({ message: '保存到相册' })
+          res(true)
+        } catch (error) {
+          rej(false)
+        }
+      }
+    })
+  }
+
+  /**
+   * 人脸识别
+   * @param options: interactiveLiveness.InteractiveLivenessConfig 人脸识别配置信息
+   * @returns: interactiveLiveness.InteractiveLivenessResult 人脸识别后图片
+   */
+  async face(options: interactiveLiveness.InteractiveLivenessConfig = {
+    actionsNum: 1 as interactiveLiveness.ActionsNumber,
+    isSilentMode: "INTERACTIVE_MODE" as interactiveLiveness.DetectionMode,
+    routeMode: "back" as interactiveLiveness.RouteRedirectionMode
+  }): Promise<interactiveLiveness.InteractiveLivenessResult> {
+    return new Promise(async (res, rej) => {
+      let map = await global.requestPermissions("ohos.permission.CAMERA", "ohos.permission.PRIVACY_WINDOW")
+      if (map.get("ohos.permission.CAMERA") == false) {
+        rej("需要打开ohos.permission.CAMERA权限")
+      } else if (options.isPrivacyMode == false &&
+        map.get("ohos.permission.PRIVACY_WINDOW") == false) {
+        rej("需要打开ohos.permission.PRIVACY_WINDOW权限")
+      } else {
+        interactiveLiveness.startLivenessDetection(options,
+          (err: BusinessError, result: interactiveLiveness.InteractiveLivenessResult | undefined) => {
+            if (result != undefined && err.code == 0) {
+              res(result)
+            } else {
+              rej(err ?? "result is undefined")
+              return;
+            }
+          })
+      }
+    })
+  }
+
+  /**
+   * 生成随机UUID
+   * @returns
+   */
+  generateUUID(): string {
+    return 'xxxxyxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * 滑动动效
+   * @param edge 滑出方式
+   * @returns 返回动效
+   */
+  moveEffect(edge: TransitionEdge | undefined, duration: number = 200): TransitionEffect {
+    return TransitionEffect.asymmetric(
+      TransitionEffect.move(edge).animation({ duration: duration })
+      ,
+      TransitionEffect.move(edge).animation({ duration: duration })
+    )
+  }
+
+  /**
+   * map 转化为Record类型
+   * @param map
+   * @returns
+   */
+  toRecord(map: Map<string, object>): Record<string, object> {
+    let r: Record<string, object> = {}
+    map.forEach((value, key) => {
+      if (key !== undefined && value !== undefined) {
+        r[key] = value;
+      }
+    })
+    return r
+  }
+
+  /**
+   * object 转化为map类型
+   * @param obj
+   * @returns
+   */
+  toMap<T = object>(obj: object): Map<string, T> {
+    return new Map<string, T>(Object.entries(obj))
+  }
+
+  /**
+   * 根据参数取数组
+   * @param list
+   * @param k
+   * @returns
+   */
+  listParams<T>(list: object[], k: string): Array<T> {
+    let l: Array<T> = []
+    list.forEach((v) => {
+      l.push(v[k] as T)
+    })
+    return l
+  }
+
+  /**
+   * 计算当前组件的中心位置
+   * @param e
+   * @returns
+   */
+  toCenter(e: ClickEvent): Offset {
+    let x = parseFloat(e.target.area.globalPosition.x!.toString())
+    let y = parseFloat(e.target.area.globalPosition.y!.toString())
+    let w = parseFloat(e.target.area.width.toString())
+    let h = parseFloat(e.target.area.height.toString())
+    let cenX = x + w / 2
+    let cenY = y + h / 2
+    return { dx: cenX, dy: cenY }
+  }
+}
+
+export class Error extends Tools {
   /**
    * 错误监听id
    */

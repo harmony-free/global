@@ -3,6 +3,14 @@
     {
       "name": "page_show",
       "value": "page from package"
+    },
+    {
+      "name": "camera_reason",
+      "value": "需要使用相机进行人脸识别"
+    },
+    {
+      "name": "privacy_window_reason",
+      "value": "取消隐私模式进行人脸识别"
     }
   ]
 }
