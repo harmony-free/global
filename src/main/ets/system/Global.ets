@@ -12,14 +12,14 @@ import { AnimatorUtils } from './AnimatorUtils'
 import { LogUtils } from './Log'
 import { PreferencesPermission } from './PreferencesUtils'
 import { systemShare } from '@kit.ShareKit'
-import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { filePreview } from '@kit.PreviewKit'
-import { BusinessError } from '@kit.BasicServicesKit'
+import { BusinessError, pasteboard } from '@kit.BasicServicesKit'
 import { interactiveLiveness } from '@kit.VisionKit'
-import { hilog } from '@kit.PerformanceAnalysisKit'
 import { image } from '@kit.ImageKit'
 import { photoAccessHelper } from '@kit.MediaLibraryKit'
 import { fileIo } from '@kit.CoreFileKit'
+import { productViewManager, updateManager } from '@kit.StoreKit'
+import { pushService } from '@kit.PushKit'
 
 
 interface ContextDir {
@@ -97,6 +97,10 @@ class Window extends Display {
    * 屏幕内容的高度
    */
   contextHeight: number = 0
+  /**
+   * 推送token
+   */
+  pushToken!: string
 
   constructor() {
     super()
@@ -111,6 +115,10 @@ class Window extends Display {
     return getContext() as common.UIAbilityContext
   }
 
+  /**
+   * 文件夹
+   * @returns: ContextDir 文件夹路径
+   */
   contextDir(): ContextDir | undefined {
     let context = this.getContext()
     if (context == undefined) {
@@ -143,6 +151,19 @@ class Window extends Display {
     }
   }
 
+  getToken(): Promise<string> {
+    return new Promise<string>((res, rej) => {
+      try {
+        pushService.getToken().then((token) => {
+          this.pushToken = token
+          res(token)
+        });
+      } catch (err) {
+        rej(err)
+      }
+    })
+  }
+
   /**
    * 设置系统zhu窗口
    * @param main:window.Window 系统主窗口
@@ -150,6 +171,7 @@ class Window extends Display {
   setWindow(main: window.Window) {
     if (this.main == undefined) {
       this.main = main
+      this.getToken()
       this.properties = this.main.getWindowProperties()
       this.main.on('windowSizeChange', () => this.resize())
       this.resize()
@@ -180,9 +202,7 @@ class Window extends Display {
    * @param info
    */
   navDestinationUpdate(info: NavDestinationInfo) {
-    if (info.state == 0) {
-      console.log("组件显示：" + info.name)
-    }
+    console.log(`navInfo：${JSON.stringify(info)}`)
   }
 
   /**
@@ -190,9 +210,7 @@ class Window extends Display {
    * @param info
    */
   routerPageUpdate(info: RouterPageInfo) {
-    if (info.state == 0) {
-      console.log("页面即将显示：" + info.name)
-    }
+    console.log(`routerInfo:${JSON.stringify(info)}`)
   }
 
   /**
@@ -260,7 +278,7 @@ class Tools extends Window {
   /**
    * 动画
    */
-  animation: AnimatorUtils = new AnimatorUtils()
+  animation: AnimatorUtils = new AnimatorUtils().run()
 
   /**
    * 打开权限管理
@@ -380,6 +398,116 @@ class Tools extends Window {
   }
 
   /**
+   * app检查更新
+   * @returns: boolean 是否更新成功
+   */
+  appUpdate(): Promise<boolean> {
+    return new Promise<boolean>((res, rej) => {
+      let context = this.getContext()
+      if (context != undefined) {
+        try {
+          updateManager.checkAppUpdate(context).then((data: updateManager.CheckUpdateResult) => {
+            if (data.updateAvailable == updateManager.UpdateAvailableCode.LATER_VERSION_EXIST) {
+              updateManager.showUpdateDialog(context).then((code: updateManager.ShowUpdateResultCode) => {
+                res(code == updateManager.ShowUpdateResultCode.SHOW_DIALOG_SUCCESS)
+              }).catch((error: BusinessError) => {
+                rej(error)
+              })
+            } else {
+              rej({
+                code: 10010,
+                name: "updateManager",
+                message: "version not update"
+              })
+            }
+          }).catch((error: BusinessError) => {
+            rej(error)
+          })
+        } catch (error) {
+          rej(error)
+        }
+      } else {
+        rej({
+          code: 404,
+          name: "updateManager",
+          message: "context not found"
+        })
+      }
+    })
+
+
+  }
+
+  appProduct(bundleName: string): Promise<boolean> {
+    return new Promise<boolean>((res, rej) => {
+      let context = this.getContext()
+      if (context != undefined) {
+        const wantParam: Want = {
+          parameters: {
+            // 此处填入要加载的应用包名，例如： bundleName: 'com.huawei.hmsapp.books'
+            bundleName: bundleName
+          }
+        }
+        const callback: productViewManager.ProductViewCallback = {
+          onError: (error: BusinessError) => {
+            if (error.code == 0) {
+              res(true)
+            } else {
+              let want: Want = {
+                action: 'ohos.want.action.appdetail', //隐式指定action为ohos.want.action.appdetail
+                uri: 'store://appgallery.huawei.com/app/detail?id=' + bundleName, //  bundleName为需要打开应用详情的应用包名
+              };
+              context!.startAbility(want).then(() => {
+                res(true)
+              }).catch((error: BusinessError) => {
+                res(false)
+                rej(error)
+              });
+            }
+          }
+        }
+        productViewManager.loadProduct(context, wantParam, callback);
+      } else {
+        rej({
+          code: 404,
+          name: "productViewManager",
+          message: "context not found"
+        })
+      }
+    })
+  }
+
+  /**
+   * 复制到粘贴板
+   * @param text: string 复制内容
+   */
+  copy(text: string) {
+    const pasteboardData = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text);
+    const systemPasteboard = pasteboard.getSystemPasteboard();
+    systemPasteboard.setData(pasteboardData); // 将数据放入剪切板
+    systemPasteboard.getData().then((data) => {
+      if (data) {
+        promptAction.showToast({ message: '复制成功' });
+      } else {
+        promptAction.showToast({ message: '复制失败' });
+      }
+    })
+  }
+
+  /**
+   * 黏贴
+   */
+  paste() {
+    const systemPasteboard = pasteboard.getSystemPasteboard();
+    let data = systemPasteboard.getDataSync()
+    if (data) {
+      promptAction.showToast({ message: '复制成功' });
+    } else {
+      promptAction.showToast({ message: '复制失败' });
+    }
+  }
+
+  /**
    * 截屏组件 和 系统截屏
    * @param key: string 被截屏的组件
    * @param options
@@ -474,6 +602,29 @@ class Tools extends Window {
           })
       }
     })
+  }
+
+  openLink(url: string): Promise<boolean> {
+    return new Promise<boolean>((res, rej) => {
+      try {
+        // 判断是否安装支付宝
+        if (bundleManager.canOpenLink(url)) {
+          let context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+          context.startAbility({
+            uri: url
+          }, (err: BusinessError) => {
+            res(err.code == 0)
+            console.log(err.message)
+          })
+        } else {
+          rej("没有找到该应用")
+        }
+      } catch (e) {
+        console.log(JSON.stringify(e))
+        rej(e)
+      }
+    })
+
   }
 
   /**
@@ -671,6 +822,10 @@ class Global extends Error {
    * 应用程序的uid
    */
   uid: number
+  /**
+   * 应用程序的accessTokenID
+   */
+  tokenId: number
 
   constructor() {
     super()
@@ -691,6 +846,7 @@ class Global extends Error {
     this.release = this.appInfo.appProvisionType == 'release'
     this.debug = this.appInfo.appProvisionType == 'debug'
     this.uid = this.appInfo.uid
+    this.tokenId = this.appInfo.accessTokenId
   }
 }
 
