@@ -281,7 +281,7 @@ class Tools extends Window {
   animation: AnimatorUtils = new AnimatorUtils().run()
 
   /**
-   * 打开权限管理
+   * 打开应用权限管理
    */
   toAppInfo() {
     let context = getContext(this) as common.UIAbilityContext;
@@ -434,10 +434,13 @@ class Tools extends Window {
         })
       }
     })
-
-
   }
 
+  /**
+   * 打开要应用信息页面
+   * @param bundleName: 引用包名
+   * @returns: 是否打开
+   */
   appProduct(bundleName: string): Promise<boolean> {
     return new Promise<boolean>((res, rej) => {
       let context = this.getContext()
@@ -497,14 +500,10 @@ class Tools extends Window {
   /**
    * 黏贴
    */
-  paste() {
+  paste(): pasteboard.PasteData {
     const systemPasteboard = pasteboard.getSystemPasteboard();
     let data = systemPasteboard.getDataSync()
-    if (data) {
-      promptAction.showToast({ message: '复制成功' });
-    } else {
-      promptAction.showToast({ message: '复制失败' });
-    }
+    return data
   }
 
   /**
@@ -604,10 +603,16 @@ class Tools extends Window {
     })
   }
 
+  /**
+   * 打开应用
+   * @param url: 应用地址
+   * @returns: 是否打开
+   */
   openLink(url: string): Promise<boolean> {
     return new Promise<boolean>((res, rej) => {
       try {
-        // 判断是否安装支付宝
+        // 判断是否安装应用
+        // module.json5 中设置 检查安装名称 "querySchemes": [],
         if (bundleManager.canOpenLink(url)) {
           let context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
           context.startAbility({

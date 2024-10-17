@@ -108,7 +108,10 @@ export class JSBridge {
   /**
    * initialize the bridge.
    */
-  initJsBridge(): void {
+  initJsBridge(call: ((func: string, params: string) => void) | undefined = undefined): void {
+    if (call != undefined) {
+      this.call = call
+    }
     this.controller.runJavaScript(code);
   }
 
