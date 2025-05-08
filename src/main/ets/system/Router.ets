@@ -1,7 +1,10 @@
 /**
  * 使用的时候需要注册相关@Builder组件
+ * 需要再容器组件中添加 router.navPathStack 和 routerMap
+ * Navigation(router.navPathStack){}.navDestination(routerMap)
  */
 import * as nav from '../components/NavBar'
+import { AnimateCallback, CustomTransition } from './CustomNavigationUtils'
 import { global } from './Global'
 
 /**
@@ -87,11 +90,91 @@ class Router implements RouterFace {
   is404: boolean = true
 
   constructor() {
+    /**
+     * 路由拦截
+     * willShow: 页面跳转前回调，允许操作栈，在当前跳转生效。
+     * didShow: 页面跳转后回调，在该回调中操作栈会在下一次跳转生效。
+     * modeChange: Navigation单双栏显示状态发生变更时触发该回调。
+     */
     this.navPathStack.setInterception({
       willShow: (from: NavDestinationContext | NavBar) => {
       }
     })
   }
+
+  animation(from: NavContentInfo, to: NavContentInfo, operation: NavigationOperation):NavigationAnimatedTransition | undefined{
+    if (from.mode == NavDestinationMode.DIALOG || to.mode == NavDestinationMode.DIALOG) {
+      return undefined;
+    }
+    // 首页不进行自定义动画
+    if (from.index === -1 || to.index === -1) {
+      return undefined;
+    }
+    CustomTransition.getInstance().operation = operation;
+    if (CustomTransition.getInstance().interactive) {
+      let customAnimation: NavigationAnimatedTransition = {
+        onTransitionEnd: (isSuccess: boolean) => {
+          console.log("===== current transition is " + isSuccess);
+          CustomTransition.getInstance().recoverState();
+          CustomTransition.getInstance().proxy = undefined;
+        },
+        transition: (transitionProxy: NavigationTransitionProxy) => {
+          CustomTransition.getInstance().proxy = transitionProxy;
+          let targetIndex: string | undefined = operation == NavigationOperation.PUSH ?
+            (to.navDestinationId) : (from.navDestinationId);
+          if (targetIndex) {
+            CustomTransition.getInstance().fireInteractiveAnimation(targetIndex, operation);
+          }
+        },
+        isInteractive: CustomTransition.getInstance().interactive
+      }
+      return customAnimation;
+    }
+    let customAnimation: NavigationAnimatedTransition = {
+      onTransitionEnd: (isSuccess: boolean) => {
+        console.log(`current transition result is ${isSuccess}`)
+      },
+      // 转场开始时系统调用该方法，并传入转场上下文代理对象
+      transition: (transitionProxy: NavigationTransitionProxy) => {
+        if (!from.navDestinationId || !to.navDestinationId) {
+          return;
+        }
+        // 从封装类CustomTransition中根据子页面的序列获取对应的转场动画回调
+        let fromParam: AnimateCallback = CustomTransition.getInstance().getAnimateParam(from.navDestinationId);
+        let toParam: AnimateCallback = CustomTransition.getInstance().getAnimateParam(to.navDestinationId);
+        if (operation == NavigationOperation.PUSH) {
+          if (toParam.start) {
+            toParam.start(true, false);
+          }
+          animateTo({
+            duration: 300, onFinish: () => {
+              transitionProxy.finishTransition();
+            }
+          }, () => {
+            if (toParam.finish) {
+              toParam.finish(true, false);
+            }
+          })
+        } else {
+          if (fromParam.start) {
+            fromParam.start(true, true);
+          }
+          animateTo({
+            duration: 300, onFinish: () => {
+              transitionProxy.finishTransition();
+            }
+          }, () => {
+            if (fromParam.finish) {
+              fromParam.finish(true, true);
+            }
+          })
+        }
+      }
+    };
+    return customAnimation;
+  };
+
+
 
   /**
    * 注册builder

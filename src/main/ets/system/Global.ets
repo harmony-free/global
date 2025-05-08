@@ -7,10 +7,10 @@ import {
   Permissions,
   Want
 } from '@kit.AbilityKit'
-import { componentSnapshot, display, promptAction, window } from '@kit.ArkUI'
+import { componentSnapshot, display, promptAction, router, window } from '@kit.ArkUI'
 import { AnimatorUtils } from './AnimatorUtils'
-import { LogUtils } from './Log'
-import { PreferencesPermission } from './PreferencesUtils'
+import { LogUtils, SensorUtils } from './Log'
+import { PreferencesPermission, PreferencesSystem } from './PreferencesUtils'
 import { systemShare } from '@kit.ShareKit'
 import { filePreview } from '@kit.PreviewKit'
 import { BusinessError, pasteboard } from '@kit.BasicServicesKit'
@@ -82,6 +82,10 @@ class Window extends Display {
    */
   log: LogUtils = new LogUtils()
   /**
+   * 摇晃传感器
+   */
+  sen: SensorUtils = new SensorUtils()
+  /**
    * 屏幕顶部刘海屏的高度
    */
   top: number = 0
@@ -107,12 +111,35 @@ class Window extends Display {
     this.stage()
   }
 
+  getNavBarHeight(){
+    return this.top + 44;
+  }
+  getTabBarHeight(){
+    return this.bottom + 49 + 10;
+  }
+  getContentHeight(){
+    return this.height - this.getNavBarHeight() - this.getTabBarHeight();
+  }
+  getContentNavBar(){
+    return this.height - this.getTabBarHeight();
+  }
+  getContentTabBar(){
+    return this.height - this.getNavBarHeight();
+  }
+
   /**
    * 获取Context
    * @returns
    */
   getContext(): common.UIAbilityContext | undefined {
     return getContext() as common.UIAbilityContext
+  }
+
+  /**
+   * 本地储存
+   */
+  get storage():PreferencesSystem{
+    return new PreferencesSystem()
   }
 
   /**
@@ -145,7 +172,7 @@ class Window extends Display {
     if (context == undefined) {
       setTimeout(() => {
         this.stage()
-      }, 500)
+      }, 50)
     } else {
       this.setWindow(context.windowStage.getMainWindowSync())
     }
@@ -165,7 +192,7 @@ class Window extends Display {
   }
 
   /**
-   * 设置系统zhu窗口
+   * 设置系统主窗口
    * @param main:window.Window 系统主窗口
    */
   setWindow(main: window.Window) {
@@ -182,11 +209,21 @@ class Window extends Display {
 
   /**
    * 设置打印日志
-   * @param num:number = 100 设置日志展示的数量
+   * @param type:"router"|"navigation" = "navigation" 设置路由模式 默认navigation
+   * @param num:number = 20 设置手机摇晃幅度
    */
-  openLog(num: number = 100) {
-    this.log.max = 100
-    this.log.sen.sensorNum()
+  openLog(type:"router"|"navigation" = "navigation",num: number = 20) {
+    if (global.debug) {
+      this.sen.num = num
+      this.sen.type = type
+      this.sen.open();
+    }
+  }
+  /**
+   * 关闭打印日志
+   */
+  closeLog(){
+    this.sen.close();
   }
 
   /**
@@ -280,6 +317,8 @@ class Tools extends Window {
    */
   animation: AnimatorUtils = new AnimatorUtils().run()
 
+
+
   /**
    * 打开应用权限管理
    */
@@ -294,6 +333,23 @@ class Tools extends Window {
           bundleName: context.abilityInfo.bundleName//拉起方应用包名
         }
       }
+    }
+    context.startAbility(want)
+  }
+
+
+
+  /**
+   * 打开网页
+   * @param url 网页地址
+   */
+  toWeb(url:string){
+    let context = getContext(this) as common.UIAbilityContext;
+    let want: Want = {
+      action: 'ohos.want.action.viewData',
+      entities: ['entity.system.browsable'],
+      abilityName: 'MainAbility',
+      uri: url,
     }
     context.startAbility(want)
   }
@@ -348,6 +404,8 @@ class Tools extends Window {
   /**
    * 分享弹窗
    * @param record: systemShare.SharedRecord 弹窗数据
+   * import { uniformTypeDescriptor as utd } from '@kit.ArkData';
+   * utd:string 统一数据类型，参考[https://developer.huawei.com/consumer/cn/doc/harmonyos-references/js-apis-data-uniformtypedescriptor] (标准化数据定义与描述)
    * @returns
    */
   share(record: systemShare.SharedRecord): Promise<boolean> {
@@ -378,7 +436,8 @@ class Tools extends Window {
 
   /**
    * 文件预览
-   * @param info: filePreview.PreviewInfo 预览信息
+   * @param info: filePreview.PreviewInfo 预览信息 详情请查看
+   * 详情请查看 {@link https://developer.huawei.com/consumer/cn/doc/harmonyos-guides/preview-introduction }
    */
   preview(info: filePreview.PreviewInfo) {
     let context = this.getContext()
@@ -707,6 +766,16 @@ class Tools extends Window {
     let cenX = x + w / 2
     let cenY = y + h / 2
     return { dx: cenX, dy: cenY }
+  }
+
+  getParams<T = Map<string,object>>(key?:string):T | object | undefined{
+    if (router.getParams() == undefined){
+      return undefined;
+    }
+    if (key!=undefined) {
+      return (router.getParams() as Map<string,object>)[key];
+    }
+    return router.getParams() as T
   }
 }
 

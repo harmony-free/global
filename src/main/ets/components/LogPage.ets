@@ -1,6 +1,5 @@
 import { global } from '../system/Global'
 import { LogModelFace } from '../system/Log'
-import { PreferencesLog } from '../system/PreferencesUtils'
 import { router } from '../system/Router'
 import { NavBar } from './NavBar'
 
@@ -8,16 +7,18 @@ import { NavBar } from './NavBar'
 @Builder
 export function LogBuilder(o: object) {
   NavDestination() {
-    LogPage()
+    LogPage({o:o})
   }.hideTitleBar(true)
 }
 
 router.requestBuilder("log", wrapBuilder(LogBuilder))
 
 //请求日志
-@Entry
+@Entry({ routeName: 'log' })
 @Component
 export struct LogPage {
+
+  o: object | undefined
   // 返回方法
   backAction = () => {
     router.back()

@@ -11,6 +11,10 @@
     {
       "name": "privacy_window_reason",
       "value": "取消隐私模式进行人脸识别"
+    },
+    {
+      "name": "sensor_reason",
+      "value": "需要使用加速度传感器和陀螺仪获取日志"
     }
   ]
 }

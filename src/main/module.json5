@@ -9,10 +9,12 @@
     ],
     "requestPermissions": [
       {
-        "name": "ohos.permission.GYROSCOPE"
+        "name": "ohos.permission.GYROSCOPE",
+        "reason": "$string:sensor_reason"
       },
       {
-        "name": "ohos.permission.ACCELEROMETER"
+        "name": "ohos.permission.ACCELEROMETER",
+        "reason": "$string:sensor_reason"
       },
       {
         "name": "ohos.permission.CAMERA",

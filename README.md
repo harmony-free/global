@@ -54,7 +54,7 @@
 
 `import { global } from '@free/global';`
 
-2、设置主window：在 EntryAbility 文件 onWindowStageCreate 方法中添加代码
+~~2、设置主window：在 EntryAbility 文件 onWindowStageCreate 方法中添加代码~~
 
 `global.setWindow(windowStage.getMainWindowSync())`
 
@@ -66,18 +66,8 @@
   }
 ```
 
-3、开启打印日志功能：在 EntryAbility 文件 onCreate 方法中添加代码
 
-`global.openLog()`
-
-```
-  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
-    global.openLog()
-    ...
-  }
-```
-
-4、开启错误拦截功能：在 EntryAbility 文件 onCreate 方法中添加代码
+3、开启错误拦截功能：在 EntryAbility 文件 onCreate 方法中添加代码
 
 `global.onError()`
 
@@ -86,9 +76,14 @@
     global.onError()
     ...
   }
+  
+  onDestroy(): void {
+    global.offError()
+    ...
+  }
 ```
 
-5、关闭错误拦截功能：在 EntryAbility 文件 onCreate 方法中添加代码
+4、关闭错误拦截功能：在 EntryAbility 文件 onCreate 方法中添加代码
 
 `global.offError()`
 
@@ -99,6 +94,34 @@
   }
 ```
 
+5、开启打印日志功能：在 EntryAbility 文件 onCreate 方法中添加代码
+
+`global.openLog()`
+
+```
+  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    // type:"router"|"navigation" = "navigation" 设置路由模式 默认navigation
+    // num:number = 20 设置手机摇晃幅度
+    global.openLog()
+    ...
+  }
+  
+  onDestroy(): void {
+    global.closeLog()
+    ...
+  }
+  
+```
+配置 router
+```
+/// index.ets 文件
+import { router, routerMap } from '@free/global';
+
+// 配置 router.navPathStack 和 routerMap 使用 '@free/global' 中的 Navigation 路由 Router（如下）
+Navigation(router.navPathStack){}.navDestination(routerMap)
+
+```
+
 ##### 二、router使用方式
 
 1、引入头文件
@@ -106,8 +129,10 @@
 `import { NavBar, router, routerMap } from '@free/global';`
 
 2、将 `router.navPathStack` 添加到 `Navigation`
+`Navigation(router.navPathStack)`
 
-3、在 `Navigation` 设置 `.navDestination(routerMap)`
+3、再 `Navigation` 设置 `.navDestination(routerMap)`
+`Navigation(router.navPathStack){}.navDestination(routerMap)`
 
 4、通过 `router.push("name",new Object())` 进行路由跳转,第一个参数是待跳转组件，第二个参数为传递数据
 
@@ -132,10 +157,31 @@ struct RootPage {
 }
 ```
 
-6、待跳转的组件 `NamePage`
+7、待跳转的组件 `NamePage`，返回上个页面 `router.back(new Object())` 参数是传到上个页面的参数
 
-7、返回上个页面 `router.back(new Object())` 参数是传到上个页面的参数
+```
+@Builder
+export function NameBuilder(o: object) {
+  NavDestination() {
+    NamePage({o:o}) // 待跳转的组件,o为传递数据 可以不传
+  }.hideTitleBar(true) // 隐藏默认导航
+}
 
+router.requestBuilder("name", wrapBuilder(NameBuilder)) // 注册组件到路由容器中
+
+@Component
+export struct NamePage {
+  /// 接收数据
+  o: object | undefined 
+  build() {
+    Text("返回")
+    .onClick(() => {
+       router.back(new Object())
+    })
+  }
+}
+```
+注意：router 跳转 需要注册组件
 ```
 @Builder
 export function NameBuilder(o: object) {
@@ -145,16 +191,6 @@ export function NameBuilder(o: object) {
 }
 
 router.requestBuilder("name", wrapBuilder(NameBuilder)) // 注册组件到路由容器中
-
-@Component
-export struct NamePage {
-  build() {
-    Text("返回")
-    .onClick(() => {
-       router.back(new Object())
-    })
-  }
-}
 ```
 
 #### 参与贡献

@@ -108,6 +108,12 @@ export class PreferencesUtils {
   }
 }
 
+export class PreferencesSystem extends PreferencesUtils {
+  constructor() {
+    super({ name: 'system' })
+  }
+}
+
 export class PreferencesLog extends PreferencesUtils {
   constructor() {
     super({ name: 'log' })
