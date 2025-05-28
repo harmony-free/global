@@ -12,6 +12,8 @@ export struct NavBar {
   textAlign: TextAlign = TextAlign.Center
   // type
   type: 'nav' | 'router' = 'nav'
+  // 返回数据
+  backData:object | undefined = undefined
   // 标题
   @Prop title: string = ""
 
@@ -38,9 +40,9 @@ export struct NavBar {
   // 返回方法
   backAction = () => {
     if (router.size() >= 1) {
-      router.back()
+      router.back(this.backData)
     }else if (Number(route.getLength()) >= 2) {
-      route.back()
+      route.back({url:"",params:this.backData});
     }
   }
 

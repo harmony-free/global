@@ -15,6 +15,14 @@
     {
       "name": "sensor_reason",
       "value": "需要使用加速度传感器和陀螺仪获取日志"
+    },
+    {
+      "name": "location",
+      "value": "需要使用定位权限获取附近获取位置"
+    },
+    {
+      "name": "app_location",
+      "value": "需要使用大约定位权限获取附近获取位置"
     }
   ]
 }

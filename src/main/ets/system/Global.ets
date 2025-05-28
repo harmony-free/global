@@ -20,6 +20,8 @@ import { photoAccessHelper } from '@kit.MediaLibraryKit'
 import { fileIo } from '@kit.CoreFileKit'
 import { productViewManager, updateManager } from '@kit.StoreKit'
 import { pushService } from '@kit.PushKit'
+import { geoLocationManager } from '@kit.LocationKit'
+import { buffer } from '@kit.ArkTS'
 
 
 interface ContextDir {
@@ -354,6 +356,25 @@ class Tools extends Window {
     context.startAbility(want)
   }
 
+  permissions(...permissions: Array<Permissions>):Promise<boolean>{
+    return new Promise<boolean>((res,rej)=>{
+      try {
+        this.requestPermissions(...permissions).then((map)=>{
+          let isPermissions = true;
+          permissions.forEach((p)=>{
+            if (map.get(p) == false) {
+              console.error(`需要打开${p}权限`);
+              isPermissions = false
+            }
+          })
+          res(isPermissions);
+        })
+      }catch (e) {
+        res(false)
+      }
+    });
+  }
+
   /**
    * 请求权限，如果权限被拒接，弹窗提示前往设置打开权限
    * @param permissions 权限名称
@@ -632,6 +653,60 @@ class Tools extends Window {
   }
 
   /**
+   * 获取定位
+   * @returns geoLocationManager.GeoAddress
+   */
+  async location(): Promise<geoLocationManager.GeoAddress> {
+    return new Promise<geoLocationManager.GeoAddress>(async (res, rej) => {
+      try {
+        this.locationList().then((data)=>{
+          if (data.length > 0) {
+            res(data[0])
+          }else {
+            rej("location data is null")
+          }
+        })
+      }catch (e) {
+        rej(e)
+      }
+    })
+  }
+
+  /**
+   * 获取定位组
+   * @returns Array<geoLocationManager.GeoAddress>
+   */
+  async locationList(): Promise<Array<geoLocationManager.GeoAddress>> {
+    return new Promise<Array<geoLocationManager.GeoAddress>>(async (res, rej) => {
+      let context = this.getContext()
+      if (context == undefined) {
+        rej("context is null")
+      } else {
+        try {
+          let map = await global.requestPermissions("ohos.permission.LOCATION","ohos.permission.APPROXIMATELY_LOCATION")
+          if (map.get("ohos.permission.LOCATION") == false) {
+            rej("需要打开ohos.permission.LOCATION权限")
+          } else if (map.get("ohos.permission.APPROXIMATELY_LOCATION") == false) {
+            rej("需要打开ohos.permission.APPROXIMATELY_LOCATION权限")
+          } else {
+            let location = geoLocationManager.getLastLocation();
+            location['locale'] = 'zh';
+            geoLocationManager.getAddressesFromLocation(location, (err, data) => {
+              if (!err) {
+                res(data)
+              }else {
+                rej(err)
+              }
+            });
+          }
+        } catch (error) {
+          rej(error)
+        }
+      }
+    })
+  }
+
+  /**
    * 人脸识别
    * @param options: interactiveLiveness.InteractiveLivenessConfig 人脸识别配置信息
    * @returns: interactiveLiveness.InteractiveLivenessResult 人脸识别后图片
@@ -690,6 +765,60 @@ class Tools extends Window {
     })
 
   }
+
+  /**
+   * 压缩图片
+   * @param bitmap
+   * @param compressSize
+   * @param considerBase64
+   * @returns
+   */
+  async zip(bitmap: ArrayBuffer, compressSize: number, considerBase64: boolean): Promise<string|ArrayBuffer> {
+    let result:ArrayBuffer|string = '';
+
+    if (bitmap) {
+      try {
+        // 创建图片源和压缩器
+        let imageSource = image.createImageSource(bitmap);
+        let packer = image.createImagePacker();
+        let packerData = await packer.packing(imageSource, {
+          format: 'image/jpeg',
+          quality: 100 // 初始质量设置为 100
+        });
+
+        // 考虑 Base64 编码的影响
+        if (considerBase64 && compressSize > 0) {
+          compressSize = Math.ceil(compressSize * 3.0 / 4.0 - 0.5);
+        }
+
+        // 循环压缩直至达到目标大小
+        let optionQuality = 90; // 初始质量设置为 90
+        while (compressSize > 0
+          && packerData.byteLength / 1024 > compressSize
+          && optionQuality > 0) {
+          let whilePacker = image.createImagePacker();
+          let whileImageSource = image.createImageSource(packerData);
+          packerData = await whilePacker.packing(whileImageSource, {
+            format: 'image/jpeg',
+            quality: optionQuality
+          });
+          optionQuality -= 10; // 每次降低质量 10
+        }
+
+        if (considerBase64 == true) {
+          // 将压缩后的图片转换为 Base64 字符串
+          result = buffer.from(packerData).toString('base64');
+        }else{
+          result = packerData
+        }
+      } catch (error) {
+        console.error('error: ' + JSON.stringify(error), '%{public}s');
+      }
+    }
+
+    return result;
+  }
+
 
   /**
    * 生成随机UUID

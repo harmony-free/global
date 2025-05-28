@@ -23,6 +23,14 @@
       {
         "name": "ohos.permission.PRIVACY_WINDOW",
         "reason": "$string:privacy_window_reason"
+      },
+      {
+        "name": "ohos.permission.LOCATION",
+        "reason": "$string:location"
+      },
+      {
+        "name": "ohos.permission.APPROXIMATELY_LOCATION",
+        "reason": "$string:app_location"
       }
 
     ]
