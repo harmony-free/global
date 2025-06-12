@@ -3,7 +3,7 @@
  * 需要再容器组件中添加 router.navPathStack 和 routerMap
  * Navigation(router.navPathStack){}.navDestination(routerMap)
  */
-import * as nav from '../components/NavBar'
+import * as navBar from '../components/NavBar'
 import { AnimateCallback, CustomTransition } from './CustomNavigationUtils'
 import { global } from './Global'
 
@@ -82,6 +82,7 @@ interface RouterFace {
 /**
  * Router: 实体类
  */
+// Navigation
 class Router implements RouterFace {
   navPathStack: NavPathStack = new NavPathStack();
   routerMap: Map<string, RouterInfoFace> = new Map();
@@ -338,7 +339,7 @@ interface PageState {
 @Builder
 export function page404(o: PageState) {
   NavDestination() {
-    nav.NavBar({ title: "页面未找到" })
+    navBar.NavBar({ title: "页面未找到" })
     Text() {
       Span('404\n').fontSize(30)
       Span(`很抱歉，您所访问的页面${o.name}不存在\n，请联系系统管理员~`)
@@ -347,4 +348,6 @@ export function page404(o: PageState) {
 }
 
 export const router = new Router()
+
+export const nav = router
 
