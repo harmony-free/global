@@ -1,6 +1,6 @@
 {
   "name": "@free/global",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "这是一个全局功能,全局信息、请求权限、日志信息、异常捕获、Navigation路由封装、首选项才存储封装、屏幕适配等app相关信息。",
   "keywords": [
     "global",

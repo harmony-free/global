@@ -561,6 +561,20 @@ class Tools extends Window {
   }
 
   /**
+   * 前往应用市场
+   * @param bundleName: 引用包名  微信：com.tencent.mm
+   * @returns: 是否打开
+   */
+  appStore(bundleName: string): Promise<void> {
+    let context: common.UIAbilityContext = getContext() as common.UIAbilityContext;
+    let want: Want = {
+      action: 'ohos.want.action.appdetail',
+      uri: 'store://appgallery.huawei.com/app/detail?id=' + bundleName, //  BundleName is the package name of the application that needs to open the application details
+    };
+    return context.startAbility(want)
+  }
+
+  /**
    * 复制到粘贴板
    * @param text: string 复制内容
    */

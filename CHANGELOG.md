@@ -1,3 +1,8 @@
+[English](CHANGELOG.en.md)
+### 1.0.4 修复bug
+
+1、修复bug若干
+
 ### 1.0.3 增加 多个系统方法
 
 1、toAppInfo:打开应用权限管理

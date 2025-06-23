@@ -48,7 +48,6 @@ export class PreferencesUtils {
 
   put(key: string, value: preferences.ValueType) {
     this.preferencesUtils.putSync(key, value)
-    this.preferencesUtils.flush()
   }
 
   putFlush(key: string, value: preferences.ValueType): Promise<void> {
@@ -84,6 +83,19 @@ export class PreferencesUtils {
       this.delete(key)
       this.flush()
     }
+  }
+
+  deleteForKeys(...keys: string[]){
+    keys.forEach((key) => {
+      this.delete(key)
+    })
+  }
+
+  deleteForKeysFlush(...keys: string[]){
+    keys.forEach((key) => {
+      this.delete(key)
+    })
+    this.flush()
   }
 
   flush(): Promise<void> {
