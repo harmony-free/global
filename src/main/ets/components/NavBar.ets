@@ -22,7 +22,7 @@ export struct NavBar {
   // 默认左侧按钮
   @Builder
   leftBuilder() {
-    if (router.size() >= 1 || Number(route.getLength()) >= 2) {
+    if (this.queryNavigationInfo()?.pathStack.size() != 0 || Number(route.getLength()) >= 2) {
       Image(this.leftIcon).width(30).aspectRatio(1).onClick(this.backAction).padding({ left: 10 }).fillColor(this.textColor)
     }
   }

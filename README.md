@@ -193,6 +193,130 @@ export function NameBuilder(o: object) {
 router.requestBuilder("name", wrapBuilder(NameBuilder)) // 注册组件到路由容器中
 ```
 
+#### 插件明细
+
+hello 各位同学，大家好！ 今天我们来讲讲关于鸿蒙里常用的global全局属性。在开发的过程中通常会需要获取屏幕的宽度、高度、横竖屏、应用相关信息、打包相关信息等与app开发相关的信息
+
+一、屏幕信息Display[详细文档](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-display-V5#displaygetdisplaybyidsync12)
+
+1、屏幕的宽高
+```arkts
+// 屏幕相关信息
+let dis = display.getDefaultDisplaySync()
+// 屏幕宽度
+this.width = px2vp(dis.width)
+// 屏幕高度
+this.height = px2vp(dis.height)
+
+```
+
+2、刘海屏幕、挖空屏上下占据的高度
+
+```arkts
+// 屏幕顶部占据的高度
+let top = this.main.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM).topRect.height
+// 屏幕底部占据的高度
+let bottom = this.main.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR).bottomRect.height
+// px转换vp
+top = px2vp(top)
+bottom = px2vp(bottom)
+```
+
+3、屏幕内容宽高以及导航栏选择栏的高度
+
+```arkts
+// 屏幕宽度
+let contextWidth = width
+// 屏幕高度
+let contextHeight = height - bottom - top
+// 导航栏高度
+let navBarHeight = top + 44;
+// 选择栏高度
+let tabBarHeight = bottom + 49 + 10;
+// 内容高度
+let contentHeight = height - navBarHeight - tabBarHeight
+// 内容加导航栏高度
+let contentNavBar = height - tabBarHeight
+// 内容加导航栏高度
+let contentTabBar = height - navBarHeight
+```
+
+二、应用相关信息[详细文档](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-bundlemanager-applicationinfo-V5)
+
+
+```arkts
+// 应用相关信息
+let appInfo = bundleManager.getBundleInfoForSelfSync(flags).appInfo
+// 应用包名
+appInfo.name
+// 应用名称
+appInfo.label
+// 应用环境
+appInfo.appProvisionType
+// 打包环境
+appInfo.releaseType
+// tokenId
+appInfo.accessTokenId
+
+```
+
+三、打包相关信息[详细文档](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-bundlemanager-bundleinfo-V5)
+
+```arkts
+// 打包信息
+bundleInfo = bundleManager.getBundleInfoForSelfSync(flags)
+// 版本号
+bundleInfo.versionName
+// 签名信息
+bundleInfo.signatureInfo
+// 安装时间
+bundleInfo.installTime
+// 作者
+bundleInfo.vendor
+```
+
+注意：完整代码我已提交到[鸿蒙三方库](https://ohpm.openharmony.cn/#/cn/home)中，使用一下命令安装
+
+
+```
+ohpm install @free/global
+```
+
+
+调用方式
+
+```arkts
+// 屏幕相关信息等...
+global.top
+global.bottom
+global.width
+global.height
+global.getNavBarHeight()
+global.getTabBarHeight()
+global.getContentHeight()
+global.getContentNavBar()
+global.getContentTabBar()
+// 应用相关信息等...
+global.appInfo
+global.appName
+global.bundleName
+global.env
+global.releaseType
+global.release
+global.debug
+global.tokenId
+// 打包相关信息...
+global.bundleInfo
+global.bundleInfo.signatureInfo
+global.bundleInfo.installTime
+global.bundleInfo.vendor
+global.bundleInfo.name
+```
+
+喜欢本篇内容的话给个小爱心！
+
+
+
 #### 参与贡献
 
 1. Fork 本仓库

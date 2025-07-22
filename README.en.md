@@ -180,6 +180,129 @@ export function NameBuilder(o: object) {
 router.requestBuilder("name", wrapBuilder(NameBuilder)) // Register the component to the route container
 ```
 
+#### Plugin Details
+
+Hello, dear students! Good morning! Today, we are going to talk about the commonly used "global" attributes in HarmonyOS. During the development process, it is often necessary to obtain information related to the screen size (width and height), orientation (portrait or landscape), application-related information, packaging-related information, etc., which is all about app development.
+
+一、Screen Information Display [Detailed Documentation](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-display-V5#displaygetdisplaybyidsync12)
+
+1、The width and height of the screen
+```arkts
+// Screen-related information
+let dis = display.getDefaultDisplaySync()
+// Screen width 
+this.width = px2vp(dis.width)
+//  Screen height
+this.height = px2vp(dis.height)
+
+```
+
+2、The height occupied by the liuhai screen and the notch screen from top to bottom
+
+```arkts
+// The height occupied by the top of the screen
+let top = this.main.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM).topRect.height
+// The height occupied at the bottom of the screen
+let bottom = this.main.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR).bottomRect.height
+// px Conversion vp
+top = px2vp(top)
+bottom = px2vp(bottom)
+```
+
+3、The width and height of the screen content as well as the height of the selection bar in the navigation bar
+
+```arkts
+// Screen width
+let contextWidth = width
+// Screen height
+let contextHeight = height - bottom - top
+// Navigation bar height
+let navBarHeight = top + 44;
+// Height of the selection bar
+let tabBarHeight = bottom + 49 + 10;
+// Content Height
+let contentHeight = height - navBarHeight - tabBarHeight
+// Content height plus navigation bar height
+let contentNavBar = height - tabBarHeight
+// Content height plus navigation bar height
+let contentTabBar = height - navBarHeight
+```
+
+二、Application-related information [Detailed document](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-bundlemanager-applicationinfo-V5)
+
+
+```arkts
+// Application-related Information
+let appInfo = bundleManager.getBundleInfoForSelfSync(flags).appInfo
+// Application package name
+appInfo.name
+// Application Name
+appInfo.label
+// Application Environment
+appInfo.appProvisionType
+// Packaging environment
+appInfo.releaseType
+// tokenId
+appInfo.accessTokenId
+
+```
+
+三、Package the relevant information [Detailed Document](https://developer.huawei.com/consumer/cn/doc/harmonyos-references-V5/js-apis-bundlemanager-bundleinfo-V5)
+
+```arkts
+// Packaging information
+bundleInfo = bundleManager.getBundleInfoForSelfSync(flags)
+// Version number
+bundleInfo.versionName
+// Signature information
+bundleInfo.signatureInfo
+// 安装时间
+bundleInfo.installTime
+// Author
+bundleInfo.vendor
+```
+
+Note: The complete code has been submitted to [HarmonyOS Third-Party Library](https://ohpm.openharmony.cn/#/cn/home),Use the following command to install.
+
+
+```
+ohpm install @free/global
+```
+
+
+Calling method
+
+```arkts
+// Screen-related information, etc....
+global.top
+global.bottom
+global.width
+global.height
+global.getNavBarHeight()
+global.getTabBarHeight()
+global.getContentHeight()
+global.getContentNavBar()
+global.getContentTabBar()
+// Apply relevant information, etc....
+global.appInfo
+global.appName
+global.bundleName
+global.env
+global.releaseType
+global.release
+global.debug
+global.tokenId
+// Package the relevant information...
+global.bundleInfo
+global.bundleInfo.signatureInfo
+global.bundleInfo.installTime
+global.bundleInfo.vendor
+global.bundleInfo.name
+```
+
+If you like this content, please give a little heart!
+
+
 
 #### Contribution
 

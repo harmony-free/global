@@ -1,39 +1,38 @@
 {
-  "module": {
-    "name": "global",
-    "type": "har",
-    "deviceTypes": [
-      "default",
-      "tablet",
-      "2in1"
-    ],
-    "requestPermissions": [
-      {
-        "name": "ohos.permission.GYROSCOPE",
-        "reason": "$string:sensor_reason"
-      },
-      {
-        "name": "ohos.permission.ACCELEROMETER",
-        "reason": "$string:sensor_reason"
-      },
-      {
-        "name": "ohos.permission.CAMERA",
-        "reason": "$string:camera_reason"
-      },
-      {
-        "name": "ohos.permission.PRIVACY_WINDOW",
-        "reason": "$string:privacy_window_reason"
-      },
-      {
-        "name": "ohos.permission.LOCATION",
-        "reason": "$string:location"
-      },
-      {
-        "name": "ohos.permission.APPROXIMATELY_LOCATION",
-        "reason": "$string:app_location"
-      }
-
-    ]
-  },
-
+	"module": {
+		"name": "global",
+		"type": "har",
+		"deviceTypes": [
+			"default",
+			"tablet",
+			"2in1"
+		],
+		"requestPermissions": [
+			{
+				"name": "ohos.permission.GYROSCOPE",
+				"reason": "$string:sensor_reason"
+			},
+			{
+				"name": "ohos.permission.ACCELEROMETER",
+				"reason": "$string:sensor_reason"
+			},
+			{
+				"name": "ohos.permission.CAMERA",
+				"reason": "$string:camera_reason"
+			},
+			{
+				"name": "ohos.permission.PRIVACY_WINDOW",
+				"reason": "$string:privacy_window_reason"
+			},
+			{
+				"name": "ohos.permission.LOCATION",
+				"reason": "$string:location"
+			},
+			{
+				"name": "ohos.permission.APPROXIMATELY_LOCATION",
+				"reason": "$string:app_location"
+			}
+		],
+		"routerMap": "$profile:route_map"
+	}
 }
